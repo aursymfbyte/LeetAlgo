@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="LeetAlgo.Api/LeetAlgo.Api.csproj" />
+  <Project Path="LeetAlgo.Data/LeetAlgo.Data.csproj" />
+  <Project Path="LeetAlgo.Tools/LeetAlgo.Tools.csproj" />
+</Solution>
