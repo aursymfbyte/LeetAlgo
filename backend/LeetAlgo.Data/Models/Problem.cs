@@ -13,4 +13,11 @@ public class Problem
     public required string ComplexityAnalysis { get; set; }
     public List<Solution> Solutions { get; set; } = [];
     public Comparison? Comparison { get; set; }
+
+    public Dictionary<string, string> CodesOf(string version)
+    {
+        return Solutions
+            .Where(solution => solution.Version == version)
+            .ToDictionary(solution => solution.Language, solution => solution.Code);
+    }
 }

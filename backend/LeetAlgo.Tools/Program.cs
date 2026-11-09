@@ -1,5 +1,7 @@
 using LeetAlgo.Data;
+using LeetAlgo.Data.Models;
 using LeetAlgo.Tools;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -67,6 +69,10 @@ static void CreateAdmin(LeetAlgoContext context, string userName)
         return;
     }
 
-    AdminCreator.Create(context, userName, password);
+    Admin admin = new() { UserName = userName };
+    admin.PasswordHash = new PasswordHasher<Admin>().HashPassword(admin, password);
+    context.Admins.Add(admin);
+    context.SaveChanges();
+
     Console.WriteLine($"已建立管理者帳號：{userName}");
 }

@@ -23,6 +23,6 @@ export const languages: Language[] = [
   { key: "cpp", label: "C++", highlight: "cpp", comment: "//" },
 ];
 
-export function highlightCode(code: string, language: Language): string {
+export function highlightCode(code: string, language: Language) {
   return hljs.highlight(code, { language: language.highlight }).value;
 }

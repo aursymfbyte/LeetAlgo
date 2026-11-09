@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { ComparisonEdit, ProblemEdit, Stage } from "../lib/api";
+import { ProblemEdit, Stage } from "../lib/api";
 import { languages } from "../lib/languages";
 
 const DIFFICULTIES = ["簡單", "中等", "困難"];
@@ -48,24 +48,13 @@ export default function ProblemForm({ initial, isNew, stages, saving, error, onS
     }
   }
 
-  function updateComparison(changes: ComparisonEdit) {
-    update({ comparison: changes });
-  }
-
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     onSave(problem);
   }
 
-  let idValue = "";
-  if (problem.id !== 0) {
-    idValue = String(problem.id);
-  }
-
-  let saveText = "儲存";
-  if (saving) {
-    saveText = "儲存中…";
-  }
+  const idValue = problem.id === 0 ? "" : String(problem.id);
+  const saveText = saving ? "儲存中…" : "儲存";
 
   return (
     <form className="admin-form" onSubmit={handleSubmit}>
@@ -198,7 +187,7 @@ export default function ProblemForm({ initial, isNew, stages, saving, error, onS
               <input
                 value={comparison.readableComplexity}
                 required
-                onChange={(event) => updateComparison({ ...comparison, readableComplexity: event.target.value })}
+                onChange={(event) => update({ comparison: { ...comparison, readableComplexity: event.target.value } })}
               />
             </label>
             <label className="grow">
@@ -206,7 +195,7 @@ export default function ProblemForm({ initial, isNew, stages, saving, error, onS
               <input
                 value={comparison.optimalComplexity}
                 required
-                onChange={(event) => updateComparison({ ...comparison, optimalComplexity: event.target.value })}
+                onChange={(event) => update({ comparison: { ...comparison, optimalComplexity: event.target.value } })}
               />
             </label>
           </div>

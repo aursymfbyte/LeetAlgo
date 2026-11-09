@@ -6,10 +6,23 @@ import Pager from "../components/Pager";
 import { getProblem, hasTwoVersions, ProblemDetail } from "../lib/api";
 import { useCatalog } from "../lib/catalog";
 import { languages } from "../lib/languages";
-import { removeAdvancedSection } from "../lib/statement";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 
-function codesOf(detail: ProblemDetail): Codes {
+function removeAdvancedSection(markdown: string) {
+  const kept: string[] = [];
+  let skipping = false;
+  for (const line of markdown.split("\n")) {
+    if (line.startsWith("## ")) {
+      skipping = line.trim() === "## 進階";
+    }
+    if (!skipping) {
+      kept.push(line);
+    }
+  }
+  return kept.join("\n").trim();
+}
+
+function codesOf(detail: ProblemDetail) {
   const codes: Codes = { optimal: detail.optimal, readable: {} };
   for (const language of languages) {
     if (language.key in detail.readable) {

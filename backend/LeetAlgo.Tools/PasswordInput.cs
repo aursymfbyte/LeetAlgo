@@ -4,11 +4,6 @@ public static class PasswordInput
 {
     public static string Read()
     {
-        if (Console.IsInputRedirected)
-        {
-            return Console.ReadLine() ?? "";
-        }
-
         string password = "";
         while (true)
         {

@@ -51,14 +51,7 @@ public class ProblemsController(LeetAlgoContext context) : ControllerBase
             problem.Statement,
             problem.Complexity,
             problem.ComplexityAnalysis,
-            CodesOf(problem, Solution.Optimal),
-            CodesOf(problem, Solution.Readable));
-    }
-
-    private static Dictionary<string, string> CodesOf(Problem problem, string version)
-    {
-        return problem.Solutions
-            .Where(solution => solution.Version == version)
-            .ToDictionary(solution => solution.Language, solution => solution.Code);
+            problem.CodesOf(Solution.Optimal),
+            problem.CodesOf(Solution.Readable));
     }
 }

@@ -26,19 +26,11 @@ export default function AdminEditPage() {
   const isNew = id === undefined;
   const { stages, reload } = useCatalog();
   const navigate = useNavigate();
-  const [problem, setProblem] = useState<ProblemEdit | null>(() => {
-    if (isNew) {
-      return createEmptyProblem(stages[0].code);
-    }
-    return null;
-  });
+  const [problem, setProblem] = useState<ProblemEdit | null>(isNew ? createEmptyProblem(stages[0].code) : null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  let pageTitle = "新增題目";
-  if (!isNew) {
-    pageTitle = `編輯第 ${id} 題`;
-  }
+  const pageTitle = isNew ? "新增題目" : `編輯第 ${id} 題`;
   useDocumentTitle(pageTitle);
 
   useEffect(() => {

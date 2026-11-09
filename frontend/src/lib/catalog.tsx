@@ -37,6 +37,6 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   return <CatalogContext.Provider value={catalog}>{children}</CatalogContext.Provider>;
 }
 
-export function useCatalog(): Catalog {
+export function useCatalog() {
   return useContext(CatalogContext)!;
 }

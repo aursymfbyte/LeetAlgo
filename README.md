@@ -6,7 +6,7 @@ LeetCode 題解網站，共 156 題，每題包含 C#、Python、C、C++ 四種�
 
 使用技術：
 - 前端：React、TypeScript、Vite
-- 後端：C#、ASP.NET Web API、SQL Server
+- 後端：C#、ASP.NET Core Web API、SQL Server
 - 部署：GitHub Pages、MonsterASP.NET
 
 ## 架構
@@ -31,44 +31,40 @@ GitHub Pages ──HTTPS──▶ ASP.NET Core Web API ──▶ SQL Server
 
 ```
 frontend/src/
-├─ main.tsx              進入點，設定路由
-├─ App.tsx               頁面路由
+├─ main.tsx
+├─ App.tsx
 ├─ styles.css
 ├─ pages/
-│  ├─ IndexPage.tsx      題目列表、搜尋、依階段篩選
-│  ├─ ProblemPage.tsx   
-│  ├─ ComparePage.tsx    
-│  ├─ TermsPage.tsx      
-│  ├─ AdminLoginPage.tsx 
-│  ├─ AdminProblemsPage.tsx 
-│  └─ AdminEditPage.tsx  
+│  ├─ IndexPage.tsx
+│  ├─ ProblemPage.tsx
+│  ├─ ComparePage.tsx
+│  ├─ TermsPage.tsx
+│  ├─ AdminLoginPage.tsx
+│  ├─ AdminProblemsPage.tsx
+│  └─ AdminEditPage.tsx
 ├─ components/
 │  ├─ SiteHeader.tsx
-│  ├─ CodeViewer.tsx     
-│  ├─ Markdown.tsx      
-│  ├─ Pager.tsx         
-│  ├─ ProblemForm.tsx    
-│  └─ RequireAdmin.tsx  
+│  ├─ CodeViewer.tsx
+│  ├─ Markdown.tsx
+│  ├─ Pager.tsx
+│  ├─ ProblemForm.tsx
+│  └─ RequireAdmin.tsx
 └─ lib/
-   ├─ api.ts             呼叫後端 API 的函式和資料型別
-   ├─ auth.ts            
-   ├─ catalog.tsx        
-   └─ ...                語言設定、複雜度標示、題目內容處理等函式
+   ├─ api.ts
+   ├─ auth.ts
+   ├─ catalog.tsx
+   ├─ complexity.ts
+   ├─ languages.ts
+   └─ useDocumentTitle.ts
 ```
 
 ## 後端
 
 ### 資料庫設計
 
-| 資料表 |
-|---|
-| Stages |
-| Problems |
-| Solutions |
-| Comparisons |
-| Admins |
+資料表：Stages、Problems、Solutions、Comparisons、Admins。
 
-- 題目順序由階段順序和題號決定，會自動排序正確順序。
+- 題目順序由階段順序和題號決定，新增題目時會自動排到正確位置。
 - Solutions 建立唯一索引，避免同一題出現重複的題解。
 
 ### API
@@ -87,7 +83,7 @@ frontend/src/
 
 ## 自動部署
 
-只在自己的資料夾有變更時才執行：
+使用 GitHub Actions，前端和後端各有一個流程，只在自己的資料夾有變更時才執行：
 
 - `frontend/` 建置前端並部署到 GitHub Pages。
 - `backend/` 發佈 API，並用 Web Deploy 上傳到 MonsterASP.NET。

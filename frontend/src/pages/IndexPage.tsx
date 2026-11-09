@@ -29,7 +29,7 @@ export default function IndexPage() {
   const twoVersionCount = problems.filter(hasTwoVersions).length;
   const searchText = keyword.trim().toLowerCase();
 
-  function matches(problem: ProblemSummary): boolean {
+  function matches(problem: ProblemSummary) {
     const stageMatches = selectedStage === "all" || problem.stage === selectedStage;
     const keywordMatches = `${problem.id} ${problem.title}`.toLowerCase().includes(searchText);
     return stageMatches && keywordMatches;
@@ -46,7 +46,7 @@ export default function IndexPage() {
   return (
     <>
       <section className="hero">
-        <h1>力扣算法題解</h1>
+        <h1>算法題解</h1>
         <p className="lead">
           刷題時整理的筆記，共 {problems.length} 題，依主題分成 {stages.length} 個階段。每題都有 C#、Python、C、C++ 四種語言的題解和複雜度分析。
         </p>

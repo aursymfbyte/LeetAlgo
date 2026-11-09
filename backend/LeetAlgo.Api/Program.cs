@@ -8,7 +8,6 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
 builder.Services.AddDbContext<LeetAlgoContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("LeetAlgo")));
 
@@ -45,11 +44,6 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
 
 app.UseHttpsRedirection();
 

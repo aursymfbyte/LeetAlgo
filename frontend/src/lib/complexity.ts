@@ -1,4 +1,4 @@
-export function complexityOf(code: string, comment: string): string {
+export function complexityOf(code: string, comment: string) {
   const header: string[] = [];
   for (const line of code.split("\n")) {
     const trimmed = line.trim();
@@ -14,7 +14,7 @@ export function complexityOf(code: string, comment: string): string {
   return candidates[candidates.length - 1].replace(/。+$/, "");
 }
 
-function splitOutsideParentheses(text: string, separators: string): string[] {
+function splitOutsideParentheses(text: string, separators: string) {
   const parts: string[] = [];
   let current = "";
   let depth = 0;
@@ -35,11 +35,11 @@ function splitOutsideParentheses(text: string, separators: string): string[] {
   return parts;
 }
 
-export function shortComplexity(text: string): string {
+export function shortComplexity(text: string) {
   const kept: string[] = [];
   for (const part of splitOutsideParentheses(text, "，；")) {
     if (part.includes("O(") || part.startsWith("時間")) {
-      kept.push(part.startsWith("所以") ? part.slice(2) : part);
+      kept.push(part.startsWith("所以") ? part.slice("所以".length) : part);
     }
     if (part.includes("空間") && part.includes("O(")) {
       break;
