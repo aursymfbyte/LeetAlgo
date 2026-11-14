@@ -21,8 +21,20 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     setData({ stages, problems });
   }
 
+  async function loadWithRetry() {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await reload();
+        return;
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    }
+    setFailed(true);
+  }
+
   useEffect(() => {
-    reload().catch(() => setFailed(true));
+    loadWithRetry();
   }, []);
 
   if (failed) {

@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using LeetAlgo.Api.Auth;
 using LeetAlgo.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -41,10 +42,14 @@ builder.Services.AddRateLimiter(options =>
         limiter.PermitLimit = 10;
         limiter.Window = TimeSpan.FromMinutes(1);
     });
-    options.AddFixedWindowLimiter("visits", limiter =>
+    options.AddPolicy("visits", context =>
     {
-        limiter.PermitLimit = 60;
-        limiter.Window = TimeSpan.FromMinutes(1);
+        string ip = context.Connection.RemoteIpAddress!.ToString();
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window = TimeSpan.FromHours(1),
+        });
     });
 });
 

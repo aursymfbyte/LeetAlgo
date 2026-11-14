@@ -68,8 +68,16 @@ export type VisitStats = {
 
 const API_URL: string = import.meta.env.VITE_API_URL;
 
+async function request(path: string, options?: RequestInit) {
+  try {
+    return await fetch(API_URL + path, options);
+  } catch {
+    throw new Error("連不上伺服器，請稍後再試。");
+  }
+}
+
 async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(API_URL + path);
+  const response = await request(path);
   if (!response.ok) {
     throw new Error(`讀取失敗：${path}`);
   }
@@ -109,7 +117,7 @@ export async function recordVisit(visitorId: string) {
 }
 
 export async function login(userName: string, password: string) {
-  const response = await fetch(API_URL + "/api/auth/login", {
+  const response = await request("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ userName, password }),
@@ -130,7 +138,7 @@ export async function login(userName: string, password: string) {
 }
 
 async function sendAdminRequest(method: string, path: string, body?: ProblemEdit | Terms) {
-  const response = await fetch(API_URL + path, {
+  const response = await request(path, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -140,16 +148,21 @@ async function sendAdminRequest(method: string, path: string, body?: ProblemEdit
   });
 
   if (response.status === 401) {
+    const hasUnsavedInput = body !== undefined;
+    if (hasUnsavedInput) {
+      throw new Error("登入已過期。請開新分頁重新登入，再回到這一頁按儲存。");
+    }
     clearToken();
     window.location.hash = "#/admin/login";
     throw new Error("登入已過期，請重新登入。");
   }
   if (!response.ok) {
-    const message = await response.text();
-    if (message === "") {
-      throw new Error(`伺服器錯誤（${response.status}），請稍後再試。`);
+    const contentType = response.headers.get("Content-Type") ?? "";
+    if (contentType.startsWith("text/plain")) {
+      const message = await response.text();
+      throw new Error(message);
     }
-    throw new Error(message);
+    throw new Error(`伺服器錯誤（${response.status}），請稍後再試。`);
   }
 
   return response;

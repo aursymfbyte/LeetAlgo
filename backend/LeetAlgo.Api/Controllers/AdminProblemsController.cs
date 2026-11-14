@@ -18,7 +18,7 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
         Problem? problem = await FindProblem(id);
         if (problem == null)
         {
-            return NotFound();
+            return NotFound($"找不到第 {id} 題。");
         }
 
         return ToEditDto(problem);
@@ -70,7 +70,7 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
         Problem? problem = await FindProblem(id);
         if (problem == null)
         {
-            return NotFound();
+            return NotFound($"找不到第 {id} 題。");
         }
 
         Stage? stage = await FindStage(dto.Stage);
@@ -101,7 +101,7 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
         Problem? problem = await context.Problems.FindAsync(id);
         if (problem == null)
         {
-            return NotFound();
+            return NotFound($"找不到第 {id} 題。");
         }
 
         context.Problems.Remove(problem);

@@ -4,6 +4,7 @@ using LeetAlgo.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace LeetAlgo.Api.Controllers;
@@ -12,6 +13,8 @@ namespace LeetAlgo.Api.Controllers;
 [Route("api/visits")]
 public class VisitsController(LeetAlgoContext context) : ControllerBase
 {
+    private const int DuplicateKeyError = 2601;
+
     [HttpPost]
     [EnableRateLimiting("visits")]
     public async Task<IActionResult> RecordVisit(VisitRequest request)
@@ -21,10 +24,19 @@ public class VisitsController(LeetAlgoContext context) : ControllerBase
 
         bool counted = await context.Visits
             .AnyAsync(visit => visit.Date == today && visit.VisitorId == request.VisitorId);
-        if (!counted)
+        if (counted)
         {
-            context.Visits.Add(new Visit { Date = today, VisitorId = request.VisitorId });
+            return NoContent();
+        }
+
+        context.Visits.Add(new Visit { Date = today, VisitorId = request.VisitorId });
+        try
+        {
             await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException error) when (error.InnerException is SqlException { Number: DuplicateKeyError })
+        {
+            return NoContent();
         }
 
         return NoContent();
