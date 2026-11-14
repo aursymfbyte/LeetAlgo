@@ -52,6 +52,16 @@ export type ProblemEdit = {
   comparison: ComparisonEdit | null;
 };
 
+export type DailyVisits = {
+  date: string;
+  visitors: number;
+};
+
+export type VisitStats = {
+  totalVisitors: number;
+  days: DailyVisits[];
+};
+
 const API_URL: string = import.meta.env.VITE_API_URL;
 
 async function getJson<T>(path: string): Promise<T> {
@@ -80,6 +90,14 @@ export function getComparisons() {
 
 export function hasTwoVersions(problem: ProblemSummary) {
   return problem.readableLanguages.length > 0;
+}
+
+export async function recordVisit(visitorId: string) {
+  await fetch(API_URL + "/api/visits", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ visitorId }),
+  });
 }
 
 export async function login(userName: string, password: string) {
@@ -140,4 +158,9 @@ export async function updateProblem(problem: ProblemEdit) {
 
 export async function deleteProblem(id: number) {
   await sendAdminRequest("DELETE", `/api/admin/problems/${id}`);
+}
+
+export async function getVisitStats(): Promise<VisitStats> {
+  const response = await sendAdminRequest("GET", "/api/visits");
+  return response.json();
 }

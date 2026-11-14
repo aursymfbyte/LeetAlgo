@@ -38,6 +38,7 @@ export default function AdminProblemsPage() {
         <h1>題目管理</h1>
         <div className="admin-actions">
           <Link className="primary-button" to="/admin/problems/new">新增題目</Link>
+          <Link className="secondary-button" to="/admin/visits">造訪統計</Link>
           <button type="button" className="secondary-button" onClick={logout}>登出</button>
         </div>
       </section>

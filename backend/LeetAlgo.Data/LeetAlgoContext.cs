@@ -10,6 +10,7 @@ public class LeetAlgoContext(DbContextOptions<LeetAlgoContext> options) : DbCont
     public DbSet<Solution> Solutions => Set<Solution>();
     public DbSet<Comparison> Comparisons => Set<Comparison>();
     public DbSet<Admin> Admins => Set<Admin>();
+    public DbSet<Visit> Visits => Set<Visit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +48,11 @@ public class LeetAlgoContext(DbContextOptions<LeetAlgoContext> options) : DbCont
         {
             table.Property(admin => admin.UserName).HasMaxLength(50);
             table.HasIndex(admin => admin.UserName).IsUnique();
+        });
+
+        modelBuilder.Entity<Visit>(table =>
+        {
+            table.HasIndex(visit => new { visit.Date, visit.VisitorId }).IsUnique();
         });
     }
 }

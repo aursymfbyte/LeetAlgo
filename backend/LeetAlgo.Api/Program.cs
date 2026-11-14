@@ -41,17 +41,24 @@ builder.Services.AddRateLimiter(options =>
         limiter.PermitLimit = 10;
         limiter.Window = TimeSpan.FromMinutes(1);
     });
+    options.AddFixedWindowLimiter("visits", limiter =>
+    {
+        limiter.PermitLimit = 60;
+        limiter.Window = TimeSpan.FromMinutes(1);
+    });
 });
 
 var app = builder.Build();
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
 
+app.MapGet("/", () => "LeetAlgo API");
 app.MapControllers();
 
 app.Run();
