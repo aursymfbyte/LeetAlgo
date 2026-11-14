@@ -11,6 +11,7 @@ public class LeetAlgoContext(DbContextOptions<LeetAlgoContext> options) : DbCont
     public DbSet<Comparison> Comparisons => Set<Comparison>();
     public DbSet<Admin> Admins => Set<Admin>();
     public DbSet<Visit> Visits => Set<Visit>();
+    public DbSet<Terms> Terms => Set<Terms>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

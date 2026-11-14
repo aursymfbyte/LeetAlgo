@@ -1,0 +1,76 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace LeetAlgo.Data.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddTerms : Migration
+    {
+        const string Content = """
+            ## 表示法
+
+            - **O(…)（大 O 表示法）**：描述輸入規模變大時，步驟數或記憶體用量的成長速度。只保留成長最快的項，省略常數倍數與較低次的項，例如 3n + 5 記為 O(n)，n² + n 記為 O(n²)。
+            - **時間複雜度**：執行步驟數隨輸入規模的成長速度。
+            - **空間複雜度**：額外使用的記憶體隨輸入規模的成長速度，不含輸入本身。
+            - **n、m、k 等變數**：輸入規模，定義見各題說明。常見寫法：m × n 為網格的列數乘行數；V、E 為圖的節點數與邊數；h 為樹的高度。
+
+            ## 常見等級（由快到慢）
+
+            | 寫法 | 意義 | n = 10⁴ 時約幾步 | 典型情形 |
+            |---|---|---|---|
+            | O(1) | 固定步數，與 n 無關 | 數步 | 陣列下標取值、雜湊表查詢 |
+            | O(log n) | 每一步使範圍減半 | 14 | 二分搜尋 |
+            | O(n) | 每個元素處理固定次數 | 10⁴ | 走訪陣列一次 |
+            | O(n log n) | n 次 O(log n) 操作 | 1.3 × 10⁵ | 排序 |
+            | O(n²) | 每對元素處理一次 | 10⁸ | 兩層迴圈 |
+            | O(2ⁿ) | 每個元素選或不選 | — | 列舉所有子集 |
+            | O(n!) | 所有排列 | — | 列舉所有排列 |
+
+            O(2ⁿ)、O(n!) 只適用於 n 很小的情形（通常 n ≤ 20）。一般估計每秒約可執行 10⁸ 個簡單步驟。
+
+            ## 名詞
+
+            - **最壞情況**：所有可能輸入中最慢的情形。未特別註明時，複雜度均指最壞情況。
+            - **均攤**：少數操作成本較高，但分攤到整個操作序列後，平均每次符合該複雜度。例如動態陣列附加元素時，擴容需搬移資料，平均每次仍為 O(1)。
+            - **期望**：在隨機過程或資料平均分布的假設下的平均值。例如雜湊表查詢的期望為 O(1)，所有資料落在同一個桶時最壞為 O(n)。
+            - **log n**：n 連續除以 2 直到等於 1 所需的次數，例如 log₂1024 = 10。底數不同只差常數倍，因此通常省略。
+            - **α(n)**：反阿克曼函數，成長極慢，在任何實際的輸入規模下都不超過 5，可視為常數。出現在並查集的複雜度中。
+            - **常數空間**：即 O(1) 空間，額外記憶體量固定，與輸入規模無關。
+            - **不計答案**：題目要求回傳的結果，無論採用何種寫法都必須產生，因此慣例上不計入額外空間。
+            - **呼叫堆疊**：遞迴時，每一層尚未返回的呼叫都需保存返回位置與區域變數。遞迴深度為 d 時，空間至少為 O(d)。
+            - **n!（階乘）**：n × (n − 1) × … × 1，即 n 個元素的排列數。
+            - **C(n, k)**：從 n 個元素中選出 k 個的組合數。
+            - **卡特蘭數 Cₙ**：n 對括號的合法排列數等計數問題的答案，成長速度約為 4ⁿ。
+            """;
+
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "Terms",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Terms", x => x.Id);
+                });
+
+            migrationBuilder.InsertData(
+                table: "Terms",
+                column: "Content",
+                value: Content);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "Terms");
+        }
+    }
+}

@@ -172,6 +172,23 @@ namespace LeetAlgo.Data.Migrations
                     b.ToTable("Stages");
                 });
 
+            modelBuilder.Entity("LeetAlgo.Data.Models.Terms", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Terms");
+                });
+
             modelBuilder.Entity("LeetAlgo.Data.Models.Visit", b =>
                 {
                     b.Property<int>("Id")

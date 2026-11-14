@@ -42,6 +42,7 @@ frontend/src/
 │  ├─ AdminLoginPage.tsx
 │  ├─ AdminProblemsPage.tsx
 │  ├─ AdminEditPage.tsx
+│  ├─ AdminTermsPage.tsx
 │  └─ AdminVisitsPage.tsx
 ├─ components/
 │  ├─ SiteHeader.tsx
@@ -64,10 +65,11 @@ frontend/src/
 
 ### 資料庫設計
 
-資料表：Stages、Problems、Solutions、Comparisons、Admins、Visits。
+資料表：Stages、Problems、Solutions、Comparisons、Terms、Admins、Visits。
 
 - 題目順序由階段順序和題號決定，新增題目時會自動排到正確位置。
 - Solutions 建立唯一索引，避免同一題出現重複的題解。
+- Terms 只有一筆資料，存放複雜度名詞解釋頁的 Markdown 內容。
 - Visits 記錄每天的訪客，同一個瀏覽器一天只算一次。
 
 ### API
@@ -78,6 +80,8 @@ frontend/src/
 | GET | `/api/problems` |
 | GET | `/api/problems/{id}` |
 | GET | `/api/comparisons` |
+| GET | `/api/terms` |
+| PUT | `/api/terms` |
 | POST | `/api/auth/login` |
 | GET | `/api/admin/problems/{id}` |
 | POST | `/api/admin/problems` |

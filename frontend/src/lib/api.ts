@@ -52,6 +52,10 @@ export type ProblemEdit = {
   comparison: ComparisonEdit | null;
 };
 
+export type Terms = {
+  content: string;
+};
+
 export type DailyVisits = {
   date: string;
   visitors: number;
@@ -88,6 +92,10 @@ export function getComparisons() {
   return getJson<Comparison[]>("/api/comparisons");
 }
 
+export function getTerms() {
+  return getJson<Terms>("/api/terms");
+}
+
 export function hasTwoVersions(problem: ProblemSummary) {
   return problem.readableLanguages.length > 0;
 }
@@ -121,7 +129,7 @@ export async function login(userName: string, password: string) {
   return result.token;
 }
 
-async function sendAdminRequest(method: string, path: string, body?: ProblemEdit) {
+async function sendAdminRequest(method: string, path: string, body?: ProblemEdit | Terms) {
   const response = await fetch(API_URL + path, {
     method,
     headers: {
@@ -137,7 +145,11 @@ async function sendAdminRequest(method: string, path: string, body?: ProblemEdit
     throw new Error("登入已過期，請重新登入。");
   }
   if (!response.ok) {
-    throw new Error(await response.text());
+    const message = await response.text();
+    if (message === "") {
+      throw new Error(`伺服器錯誤（${response.status}），請稍後再試。`);
+    }
+    throw new Error(message);
   }
 
   return response;
@@ -158,6 +170,10 @@ export async function updateProblem(problem: ProblemEdit) {
 
 export async function deleteProblem(id: number) {
   await sendAdminRequest("DELETE", `/api/admin/problems/${id}`);
+}
+
+export async function updateTerms(terms: Terms) {
+  await sendAdminRequest("PUT", "/api/terms", terms);
 }
 
 export async function getVisitStats(): Promise<VisitStats> {
