@@ -48,6 +48,7 @@ frontend/src/
 │  ├─ SiteHeader.tsx
 │  ├─ CodeViewer.tsx
 │  ├─ Markdown.tsx
+│  ├─ MarkdownEditor.tsx
 │  ├─ Pager.tsx
 │  ├─ ProblemForm.tsx
 │  └─ RequireAdmin.tsx
@@ -69,8 +70,8 @@ frontend/src/
 
 - 題目順序由階段順序和題號決定，新增題目時會自動排到正確位置。
 - Solutions 建立唯一索引，避免同一題出現重複的題解。
-- Terms 只有一筆資料，存放複雜度名詞解釋頁的 Markdown 內容。
-- Visits 記錄每天的訪客，同一個瀏覽器一天只算一次。
+- Terms 存放解釋頁的 Markdown。
+- Visits 記錄每天的訪客
 
 ### API
 

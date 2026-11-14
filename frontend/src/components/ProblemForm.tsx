@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { ProblemEdit, Stage } from "../lib/api";
 import { languages } from "../lib/languages";
+import MarkdownEditor from "./MarkdownEditor";
 
 const DIFFICULTIES = ["簡單", "中等", "困難"];
 
@@ -117,11 +118,11 @@ export default function ProblemForm({ initial, isNew, stages, saving, error, onS
 
       <fieldset>
         <legend>題目（Markdown）</legend>
-        <textarea
+        <MarkdownEditor
           rows={14}
           value={problem.statement}
-          required
-          onChange={(event) => update({ statement: event.target.value })}
+          previewClassName="statement text-card"
+          onChange={(statement) => update({ statement })}
         />
       </fieldset>
 
@@ -204,11 +205,11 @@ export default function ProblemForm({ initial, isNew, stages, saving, error, onS
 
       <fieldset>
         <legend>複雜度說明（Markdown）</legend>
-        <textarea
+        <MarkdownEditor
           rows={10}
           value={problem.complexityAnalysis}
-          required
-          onChange={(event) => update({ complexityAnalysis: event.target.value })}
+          previewClassName="text-card"
+          onChange={(complexityAnalysis) => update({ complexityAnalysis })}
         />
       </fieldset>
 

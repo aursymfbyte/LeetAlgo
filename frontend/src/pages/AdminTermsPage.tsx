@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import MarkdownEditor from "../components/MarkdownEditor";
 import { getTerms, updateTerms } from "../lib/api";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 
@@ -52,11 +53,11 @@ export default function AdminTermsPage() {
         <form className="admin-form" onSubmit={handleSubmit}>
           <fieldset>
             <legend>內容（Markdown）</legend>
-            <textarea
+            <MarkdownEditor
               rows={30}
               value={content}
-              required
-              onChange={(event) => setContent(event.target.value)}
+              previewClassName="text-card terms"
+              onChange={setContent}
             />
           </fieldset>
 

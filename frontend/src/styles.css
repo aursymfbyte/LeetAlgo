@@ -763,6 +763,30 @@ pre.code code {
   margin: 0;
 }
 
+.markdown-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.syntax-help {
+  align-self: flex-start;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.syntax-help th,
+.syntax-help td {
+  text-align: left;
+  padding: 2px 20px 2px 0;
+}
+
+.syntax-help code {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
 .form-actions {
   display: flex;
   align-items: center;
@@ -807,6 +831,10 @@ pre.code code {
 
   .pager {
     grid-template-columns: 1fr;
+  }
+
+  .markdown-editor {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .pager .next {
