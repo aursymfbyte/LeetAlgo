@@ -37,10 +37,14 @@ builder.Services.AddAuthorization();
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter("login", limiter =>
+    options.AddPolicy("login", context =>
     {
-        limiter.PermitLimit = 10;
-        limiter.Window = TimeSpan.FromMinutes(1);
+        string ip = context.Connection.RemoteIpAddress!.ToString();
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+        });
     });
     options.AddPolicy("visits", context =>
     {
@@ -49,6 +53,15 @@ builder.Services.AddRateLimiter(options =>
         {
             PermitLimit = 60,
             Window = TimeSpan.FromHours(1),
+        });
+    });
+    options.AddPolicy("search", context =>
+    {
+        string ip = context.Connection.RemoteIpAddress!.ToString();
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window = TimeSpan.FromMinutes(1),
         });
     });
 });

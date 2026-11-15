@@ -52,8 +52,22 @@ export type ProblemEdit = {
   comparison: ComparisonEdit | null;
 };
 
+export type SearchResult = {
+  id: number;
+  title: string;
+  stage: string;
+  place: string;
+  snippet: string;
+};
+
 export type Terms = {
   content: string;
+};
+
+export type AnimationMessage = {
+  version: string;
+  step: number;
+  text: string;
 };
 
 export type DailyVisits = {
@@ -100,8 +114,17 @@ export function getComparisons() {
   return getJson<Comparison[]>("/api/comparisons");
 }
 
+export function searchProblems(keyword: string) {
+  const query = encodeURIComponent(keyword);
+  return getJson<SearchResult[]>(`/api/search?keyword=${query}`);
+}
+
 export function getTerms() {
   return getJson<Terms>("/api/terms");
+}
+
+export function getAnimationMessages(problemId: number) {
+  return getJson<AnimationMessage[]>(`/api/animation-messages/${problemId}`);
 }
 
 export function hasTwoVersions(problem: ProblemSummary) {
@@ -137,7 +160,7 @@ export async function login(userName: string, password: string) {
   return result.token;
 }
 
-async function sendAdminRequest(method: string, path: string, body?: ProblemEdit | Terms) {
+async function sendAdminRequest(method: string, path: string, body?: ProblemEdit | Terms | AnimationMessage) {
   const response = await request(path, {
     method,
     headers: {
@@ -192,4 +215,12 @@ export async function updateTerms(terms: Terms) {
 export async function getVisitStats(): Promise<VisitStats> {
   const response = await sendAdminRequest("GET", "/api/visits");
   return response.json();
+}
+
+export async function saveAnimationMessage(problemId: number, message: AnimationMessage) {
+  await sendAdminRequest("PUT", `/api/animation-messages/${problemId}`, message);
+}
+
+export async function deleteAnimationMessage(problemId: number, version: string, step: number) {
+  await sendAdminRequest("DELETE", `/api/animation-messages/${problemId}?version=${version}&step=${step}`);
 }

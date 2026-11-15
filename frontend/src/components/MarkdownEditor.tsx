@@ -20,10 +20,21 @@ type MarkdownEditorProps = {
 export default function MarkdownEditor({ value, rows, previewClassName, onChange }: MarkdownEditorProps) {
   return (
     <>
-      <p className="form-hint">左邊輸入，右邊即時預覽。</p>
       <div className="markdown-editor">
-        <textarea rows={rows} value={value} required onChange={(event) => onChange(event.target.value)} />
-        <Markdown className={previewClassName} text={value} />
+        <label>
+          <span className="editor-label">在這裡輸入</span>
+          <textarea
+            rows={rows}
+            value={value}
+            placeholder="在這裡輸入內容"
+            required
+            onChange={(event) => onChange(event.target.value)}
+          />
+        </label>
+        <div className="markdown-preview">
+          <span className="editor-label">預覽（不能在這裡編輯）</span>
+          <Markdown className={previewClassName} text={value} />
+        </div>
       </div>
       <table className="syntax-help">
         <thead>

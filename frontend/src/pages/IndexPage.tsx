@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import ContentMatches from "../components/ContentMatches";
 import { hasTwoVersions, ProblemSummary } from "../lib/api";
 import { useCatalog } from "../lib/catalog";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
@@ -59,7 +60,7 @@ export default function IndexPage() {
         <input
           type="search"
           id="search"
-          placeholder="搜尋題號或題名"
+          placeholder="搜尋題號、題名、內文或程式碼"
           autoComplete="off"
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
@@ -83,8 +84,10 @@ export default function IndexPage() {
             </button>
           ))}
         </div>
-        {stageGroups.length === 0 && <p className="empty">找不到符合的題目。</p>}
+        {stageGroups.length === 0 && <p className="empty">題號和題名裡找不到符合的題目。</p>}
       </section>
+
+      <ContentMatches keyword={keyword.trim()} stage={selectedStage} />
 
       {stageGroups.map(({ stage, total, visible }) => (
         <section className="stage" key={stage.code}>

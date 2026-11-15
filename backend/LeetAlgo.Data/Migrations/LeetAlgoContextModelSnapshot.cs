@@ -47,6 +47,38 @@ namespace LeetAlgo.Data.Migrations
                     b.ToTable("Admins");
                 });
 
+            modelBuilder.Entity("LeetAlgo.Data.Models.AnimationMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ProblemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Step")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProblemId", "Version", "Step")
+                        .IsUnique();
+
+                    b.ToTable("AnimationMessages");
+                });
+
             modelBuilder.Entity("LeetAlgo.Data.Models.Comparison", b =>
                 {
                     b.Property<int>("ProblemId")
@@ -209,6 +241,17 @@ namespace LeetAlgo.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Visits");
+                });
+
+            modelBuilder.Entity("LeetAlgo.Data.Models.AnimationMessage", b =>
+                {
+                    b.HasOne("LeetAlgo.Data.Models.Problem", "Problem")
+                        .WithMany()
+                        .HasForeignKey("ProblemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Problem");
                 });
 
             modelBuilder.Entity("LeetAlgo.Data.Models.Comparison", b =>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import CodeViewer, { Codes } from "../components/CodeViewer";
 import Markdown from "../components/Markdown";
@@ -7,6 +7,8 @@ import { getProblem, hasTwoVersions, ProblemDetail } from "../lib/api";
 import { useCatalog } from "../lib/catalog";
 import { languages } from "../lib/languages";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
+
+const AnimationSection = lazy(() => import("../components/AnimationSection"));
 
 function removeAdvancedSection(markdown: string) {
   const kept: string[] = [];
@@ -95,6 +97,10 @@ export default function ProblemPage() {
       {detail && (
         <>
           <Markdown className="statement text-card" text={removeAdvancedSection(detail.statement)} />
+
+          <Suspense fallback={null}>
+            <AnimationSection problemId={problem.id} />
+          </Suspense>
 
           <section className="solutions">
             <h2>題解</h2>

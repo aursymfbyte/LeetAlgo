@@ -12,6 +12,7 @@ public class LeetAlgoContext(DbContextOptions<LeetAlgoContext> options) : DbCont
     public DbSet<Admin> Admins => Set<Admin>();
     public DbSet<Visit> Visits => Set<Visit>();
     public DbSet<Terms> Terms => Set<Terms>();
+    public DbSet<AnimationMessage> AnimationMessages => Set<AnimationMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -54,6 +55,13 @@ public class LeetAlgoContext(DbContextOptions<LeetAlgoContext> options) : DbCont
         modelBuilder.Entity<Visit>(table =>
         {
             table.HasIndex(visit => new { visit.Date, visit.VisitorId }).IsUnique();
+        });
+
+        modelBuilder.Entity<AnimationMessage>(table =>
+        {
+            table.Property(message => message.Version).HasMaxLength(10);
+            table.Property(message => message.Text).HasMaxLength(300);
+            table.HasIndex(message => new { message.ProblemId, message.Version, message.Step }).IsUnique();
         });
     }
 }
