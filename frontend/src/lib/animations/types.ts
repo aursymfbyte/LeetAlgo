@@ -11,6 +11,7 @@ export type Row = {
   answer: number[];
   indexed: boolean;
   shape: Shape;
+  ends: boolean;
 };
 
 export type Frame = {
@@ -34,6 +35,7 @@ export function row(label: string, cells: Cell[], options: Partial<Row> = {}): R
     answer: [],
     indexed: true,
     shape: "cells",
+    ends: false,
     ...options,
   };
 }

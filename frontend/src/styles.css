@@ -645,6 +645,11 @@ pre.code code {
   color: var(--text-muted);
 }
 
+.cell.beyond .cell-value {
+  background: none;
+  border-style: dashed;
+}
+
 .cell.answer .cell-value {
   background: var(--accent);
   color: var(--accent-text);

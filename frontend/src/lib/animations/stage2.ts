@@ -80,14 +80,12 @@ function binarySearch(numbers: number[], target: number) {
 }
 
 function between(label: string, cells: Cell[], left: number, right: number) {
-  const pointers: Record<string, number> = {};
-  if (left >= 0) {
-    pointers.左 = left;
-  }
-  if (right < cells.length) {
-    pointers.右 = right;
-  }
-  return row(label, cells, { pointers, rangeStart: left + 1, rangeEnd: right - 1 });
+  return row(label, cells, {
+    pointers: { 左: left, 右: right },
+    rangeStart: left + 1,
+    rangeEnd: right - 1,
+    ends: true,
+  });
 }
 
 function oneTo(count: number) {
@@ -191,7 +189,7 @@ function rotatedSearch(numbers: number[], target: number) {
 
   if (index === count) {
     frames.push({
-      rows: [row("陣列", numbers, { rangeEnd: -1 })],
+      rows: [row("陣列", numbers, { rangeEnd: -1, ends: true })],
       message: `右邊界還停在位置 ${count}（陣列外面），這一段沒有數大於等於 ${target}，所以 ${target} 不在陣列中。一共只比較了 ${compared} 次。`,
     });
     return frames;
@@ -200,7 +198,7 @@ function rotatedSearch(numbers: number[], target: number) {
   compared++;
   if (numbers[index] !== target) {
     frames.push({
-      rows: [row("陣列", numbers, { rangeEnd: -1 })],
+      rows: [row("陣列", numbers, { rangeEnd: -1, ends: true })],
       message: `右邊界停在位置 ${index}，那裡是 ${numbers[index]}，不是 ${target}，所以 ${target} 不在陣列中。一共只比較了 ${compared} 次。`,
     });
     return frames;
@@ -270,7 +268,7 @@ function rangeBinary(numbers: number[], target: number) {
 
   if (start === count) {
     frames.push({
-      rows: [row("陣列", numbers, { rangeEnd: -1 })],
+      rows: [row("陣列", numbers, { rangeEnd: -1, ends: true })],
       message: `右邊界還停在位置 ${count}（陣列外面），沒有數大於等於 ${target}，所以 ${target} 不在陣列中，答案是 -1 和 -1。一共只比較了 ${compared} 次。`,
     });
     return frames;
@@ -279,7 +277,7 @@ function rangeBinary(numbers: number[], target: number) {
   compared++;
   if (numbers[start] !== target) {
     frames.push({
-      rows: [row("陣列", numbers, { rangeEnd: -1 })],
+      rows: [row("陣列", numbers, { rangeEnd: -1, ends: true })],
       message: `右邊界停在位置 ${start}，那裡是 ${numbers[start]}，不是 ${target}，所以 ${target} 不在陣列中，答案是 -1 和 -1。一共只比較了 ${compared} 次。`,
     });
     return frames;
@@ -737,7 +735,7 @@ function badVersionBinary(count: number, bad: number) {
   let checked = 0;
 
   frames.push({
-    rows: [numberLine("版本", versions, left, right), row("檢查結果", results, { indexed: false })],
+    rows: [numberLine("版本", versions, left, right), row("檢查結果", results, { indexed: false, ends: true })],
     message: `要找第一個壞版本。左邊界放在第 0 版（不存在，當成好的），右邊界放在第 ${count} 版（題目保證最新版是壞的），每次檢查正中間的版本。`,
   });
 
@@ -750,14 +748,14 @@ function badVersionBinary(count: number, bad: number) {
     if (middle >= bad) {
       results[middle - 1] = "壞";
       frames.push({
-        rows: [line, row("檢查結果", results, { indexed: false })],
+        rows: [line, row("檢查結果", results, { indexed: false, ends: true })],
         message: `檢查中間的第 ${middle} 版：是壞的，第一個壞版本在它這裡或它前面，把右邊界移到第 ${middle} 版。`,
       });
       right = middle;
     } else {
       results[middle - 1] = "好";
       frames.push({
-        rows: [line, row("檢查結果", results, { indexed: false })],
+        rows: [line, row("檢查結果", results, { indexed: false, ends: true })],
         message: `檢查中間的第 ${middle} 版：是好的，它和它前面的版本都是好的，把左邊界移到第 ${middle} 版。`,
       });
       left = middle;
@@ -767,7 +765,7 @@ function badVersionBinary(count: number, bad: number) {
   const line = numberLine("版本", versions, left, right);
   line.answer = [right - 1];
   frames.push({
-    rows: [line, row("檢查結果", results, { indexed: false })],
+    rows: [line, row("檢查結果", results, { indexed: false, ends: true })],
     message: `左右邊界相鄰，中間沒有版本了。左邊界是好的、右邊界是壞的，所以第一個壞版本是 ${right}。一共只檢查了 ${checked} 個版本。`,
   });
   return frames;
@@ -813,7 +811,7 @@ function guessBinary(count: number, pick: number) {
   let guessed = 0;
 
   frames.push({
-    rows: [numberLine("數字", numbers, left, right), row("回應", replies, { indexed: false })],
+    rows: [numberLine("數字", numbers, left, right), row("回應", replies, { indexed: false, ends: true })],
     message: `要猜出系統選的數字。左邊界放在 0（不在範圍裡，一定太小），右邊界放在 ${count}（答案最大就是它），每次猜正中間的數字。`,
   });
 
@@ -826,21 +824,21 @@ function guessBinary(count: number, pick: number) {
     if (middle < pick) {
       replies[middle - 1] = "太小";
       frames.push({
-        rows: [line, row("回應", replies, { indexed: false })],
+        rows: [line, row("回應", replies, { indexed: false, ends: true })],
         message: `猜中間的 ${middle}：系統說太小了，答案一定比 ${middle} 大，把左邊界移到 ${middle}。`,
       });
       left = middle;
     } else if (middle > pick) {
       replies[middle - 1] = "太大";
       frames.push({
-        rows: [line, row("回應", replies, { indexed: false })],
+        rows: [line, row("回應", replies, { indexed: false, ends: true })],
         message: `猜中間的 ${middle}：系統說太大了，答案一定比 ${middle} 小，但這個寫法只把右邊界移到 ${middle}，保持右邊界不小於答案。`,
       });
       right = middle;
     } else {
       replies[middle - 1] = "猜中";
       frames.push({
-        rows: [line, row("回應", replies, { indexed: false })],
+        rows: [line, row("回應", replies, { indexed: false, ends: true })],
         message: `猜中間的 ${middle}：系統說猜中了。這個寫法不會在這裡停下來，一樣把右邊界移到 ${middle}，等中間沒有數字時，右邊界就是答案。`,
       });
       right = middle;
@@ -850,7 +848,7 @@ function guessBinary(count: number, pick: number) {
   const line = numberLine("數字", numbers, left, right);
   line.answer = [right - 1];
   frames.push({
-    rows: [line, row("回應", replies, { indexed: false })],
+    rows: [line, row("回應", replies, { indexed: false, ends: true })],
     message: `左右邊界相鄰，中間沒有數字了，右邊界 ${right} 就是系統選的數字。一共只猜了 ${guessed} 次。`,
   });
   return frames;
@@ -1002,11 +1000,11 @@ function pairsBinary(spells: number[], potions: number[], success: number) {
   let multiplied = 0;
 
   frames.push({
-    rows: [row("咒語", spells), row("藥水", potions), row("答案", pairs, { indexed: false })],
+    rows: [row("咒語", spells), row("藥水", potions, { ends: true }), row("答案", pairs, { indexed: false })],
     message: `先把藥水由小到大排序。排序之後，對同一個咒語來說，越右邊的藥水乘積越大，成功的藥水會集中在右邊。`,
   });
   frames.push({
-    rows: [row("咒語", spells), row("藥水", sorted), row("答案", pairs, { indexed: false })],
+    rows: [row("咒語", spells), row("藥水", sorted, { ends: true }), row("答案", pairs, { indexed: false })],
     message: `排序好了。每個咒語都用二分搜尋找第一瓶成功的藥水：左邊界從位置 -1、右邊界從位置 ${count} 開始，都在陣列外面。`,
   });
 
@@ -1057,7 +1055,7 @@ function pairsBinary(spells: number[], potions: number[], success: number) {
   frames.push({
     rows: [
       row("咒語", spells, { rangeEnd: -1 }),
-      row("藥水", sorted, { rangeEnd: -1 }),
+      row("藥水", sorted, { rangeEnd: -1, ends: true }),
       row("答案", pairs, { answer: pairs.map((pair, index) => index), indexed: false }),
     ],
     message: `答案是 ${pairs.join("、")}。藥水排序一次之後，每個咒語都用二分搜尋找，一共只算了 ${multiplied} 次乘法。`,

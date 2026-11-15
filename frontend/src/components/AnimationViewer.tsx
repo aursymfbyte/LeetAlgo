@@ -32,6 +32,9 @@ const LEVEL_HEIGHT = 84;
 const NODE_CENTER = 46;
 
 function cellClass(row: Row, index: number) {
+  if (index < 0 || index >= row.cells.length) {
+    return "cell outside beyond";
+  }
   if (row.answer.includes(index)) {
     return "cell answer";
   }
@@ -109,6 +112,16 @@ function TreeView({ row }: { row: Row }) {
   );
 }
 
+function CellView({ row, index }: { row: Row; index: number }) {
+  return (
+    <div className={cellClass(row, index)}>
+      <span className="cell-pointers">{pointersAt(row, index)}</span>
+      <span className="cell-value">{row.cells[index]}</span>
+      {row.indexed && <span className="cell-index">{index}</span>}
+    </div>
+  );
+}
+
 function RowView({ row }: { row: Row }) {
   if (row.shape === "tree") {
     return (
@@ -124,13 +137,11 @@ function RowView({ row }: { row: Row }) {
       <span className="row-label">{row.label}</span>
       <div className={cellsClass(row)}>
         {row.cells.length === 0 && <span className="cells-empty">（空的）</span>}
+        {row.ends && <CellView row={row} index={-1} />}
         {row.cells.map((cell, index) => (
-          <div className={cellClass(row, index)} key={index}>
-            <span className="cell-pointers">{pointersAt(row, index)}</span>
-            <span className="cell-value">{cell}</span>
-            {row.indexed && <span className="cell-index">{index}</span>}
-          </div>
+          <CellView key={index} row={row} index={index} />
         ))}
+        {row.ends && <CellView row={row} index={row.cells.length} />}
       </div>
     </div>
   );

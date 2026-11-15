@@ -211,9 +211,15 @@ function countCells(count: Record<string, number>) {
 }
 
 function sameCount(first: Record<string, number>, second: Record<string, number>) {
-  const firstText = countCells(first).join();
-  const secondText = countCells(second).join();
-  return firstText === secondText;
+  const letters = [...Object.keys(first), ...Object.keys(second)];
+  for (const letter of letters) {
+    const firstTimes = first[letter] ?? 0;
+    const secondTimes = second[letter] ?? 0;
+    if (firstTimes !== secondTimes) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function longestUniqueBrute(text: string) {
