@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Frame, ProblemAnimation, Row } from "../lib/animations/types";
 import { AnimationMessage } from "../lib/api";
-import { getToken } from "../lib/auth";
+import { isLoggedIn } from "../lib/auth";
 
 type Version = "brute" | "efficient";
 
@@ -159,7 +159,7 @@ function Player({ frames, edits, onSave, onRestore }: PlayerProps) {
   const edit = edits.find((item) => item.step === step);
   const message = edit === undefined ? frame.message : edit.text;
   const editText = edit === undefined ? "編輯這一步的說明" : "編輯這一步的說明（已改過）";
-  const isAdmin = getToken() !== null;
+  const isAdmin = isLoggedIn();
 
   useEffect(() => {
     if (!playing) {

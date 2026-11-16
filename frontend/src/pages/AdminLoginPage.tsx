@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../lib/api";
-import { saveToken } from "../lib/auth";
+import { saveLogin } from "../lib/auth";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 
 export default function AdminLoginPage() {
@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
     setError("");
     try {
       const token = await login(userName, password);
-      saveToken(token);
+      saveLogin(token, userName);
       navigate("/admin");
     } catch (loginError) {
       setError((loginError as Error).message);

@@ -121,6 +121,10 @@ a:hover {
   text-decoration: none;
 }
 
+.site-nav a.login-state {
+  color: var(--accent);
+}
+
 main.wrap {
   padding-top: 32px;
   padding-bottom: 48px;

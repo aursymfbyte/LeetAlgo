@@ -1,9 +1,9 @@
 import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
-import { getToken } from "../lib/auth";
+import { isLoggedIn } from "../lib/auth";
 
 export default function RequireAdmin({ children }: { children: ReactNode }) {
-  if (getToken() === null) {
+  if (!isLoggedIn()) {
     return <Navigate to="/admin/login" replace />;
   }
   return children;
