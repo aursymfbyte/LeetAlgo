@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { searchProblems, SearchResult } from "../lib/api";
+import { searchProblems, SearchResponse } from "../lib/api";
+
+const NO_MATCHES: SearchResponse = { results: [], truncated: false };
 
 const PLACE_NAMES: Record<string, string> = {
   statement: "題目",
@@ -33,25 +35,25 @@ type ContentMatchesProps = {
 };
 
 export default function ContentMatches({ keyword, stage }: ContentMatchesProps) {
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [matches, setMatches] = useState(NO_MATCHES);
 
   useEffect(() => {
     if (keyword.length < 2) {
-      setResults([]);
+      setMatches(NO_MATCHES);
       return;
     }
 
     let cancelled = false;
     const timer = setTimeout(() => {
-      searchProblems(keyword)
+      searchProblems(keyword, stage)
         .then((found) => {
           if (!cancelled) {
-            setResults(found);
+            setMatches(found);
           }
         })
         .catch(() => {
           if (!cancelled) {
-            setResults([]);
+            setMatches(NO_MATCHES);
           }
         });
     }, 300);
@@ -60,21 +62,23 @@ export default function ContentMatches({ keyword, stage }: ContentMatchesProps) 
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [keyword]);
+  }, [keyword, stage]);
 
-  const visible = results.filter((result) => stage === "all" || result.stage === stage);
-  if (visible.length === 0) {
+  const { results, truncated } = matches;
+  if (results.length === 0) {
     return null;
   }
+
+  const countText = truncated ? `只列出前 ${results.length} 題` : `${results.length} 題`;
 
   return (
     <section className="stage">
       <h2>
         內文和程式碼裡找到的題目
-        <span className="count">{visible.length} 題</span>
+        <span className="count">{countText}</span>
       </h2>
       <ul className="problem-list">
-        {visible.map((result) => (
+        {results.map((result) => (
           <li key={result.id}>
             <Link to={`/problem/${result.id}`}>
               <span className="number">{result.id}</span>

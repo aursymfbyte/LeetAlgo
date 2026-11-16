@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
 import { getProblems, getStages, ProblemSummary, Stage } from "./api";
 
 type CatalogData = {
@@ -10,7 +11,12 @@ type Catalog = CatalogData & {
   reload: () => Promise<void>;
 };
 
-const CatalogContext = createContext<Catalog | null>(null);
+type CatalogState = {
+  catalog: Catalog | null;
+  failed: boolean;
+};
+
+const CatalogContext = createContext<CatalogState>({ catalog: null, failed: false });
 
 export function CatalogProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<CatalogData | null>(null);
@@ -37,18 +43,28 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     loadWithRetry();
   }, []);
 
+  const catalog = data === null ? null : { ...data, reload };
+  return <CatalogContext.Provider value={{ catalog, failed }}>{children}</CatalogContext.Provider>;
+}
+
+export function RequireCatalog() {
+  const { catalog, failed } = useContext(CatalogContext);
+
   if (failed) {
     return <p className="message">讀取題目清單失敗，請重新整理頁面。</p>;
   }
 
-  if (data === null) {
+  if (catalog === null) {
     return <p className="message">載入中…</p>;
   }
 
-  const catalog: Catalog = { stages: data.stages, problems: data.problems, reload };
-  return <CatalogContext.Provider value={catalog}>{children}</CatalogContext.Provider>;
+  return <Outlet />;
 }
 
 export function useCatalog() {
-  return useContext(CatalogContext)!;
+  return useContext(CatalogContext).catalog!;
+}
+
+export function useCatalogIfLoaded() {
+  return useContext(CatalogContext).catalog;
 }

@@ -60,6 +60,11 @@ export type SearchResult = {
   snippet: string;
 };
 
+export type SearchResponse = {
+  results: SearchResult[];
+  truncated: boolean;
+};
+
 export type Terms = {
   content: string;
 };
@@ -106,17 +111,27 @@ export function getProblems() {
   return getJson<ProblemSummary[]>("/api/problems");
 }
 
-export function getProblem(id: number) {
-  return getJson<ProblemDetail>(`/api/problems/${id}`);
+export async function getProblem(id: number): Promise<ProblemDetail> {
+  const response = await request(`/api/problems/${id}`);
+  if (response.status === 404) {
+    throw new Error("找不到這一題。");
+  }
+  if (!response.ok) {
+    throw new Error("讀取題目失敗，請重新整理頁面。");
+  }
+  return response.json();
 }
 
 export function getComparisons() {
   return getJson<Comparison[]>("/api/comparisons");
 }
 
-export function searchProblems(keyword: string) {
-  const query = encodeURIComponent(keyword);
-  return getJson<SearchResult[]>(`/api/search?keyword=${query}`);
+export function searchProblems(keyword: string, stage: string) {
+  const query = new URLSearchParams({ keyword });
+  if (stage !== "all") {
+    query.set("stage", stage);
+  }
+  return getJson<SearchResponse>(`/api/search/v2?${query}`);
 }
 
 export function getTerms() {

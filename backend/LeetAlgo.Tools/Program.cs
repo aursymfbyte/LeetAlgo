@@ -35,6 +35,8 @@ else
 
 static void ImportProblems(LeetAlgoContext context, string sourceFolder)
 {
+    context.Database.Migrate();
+
     if (context.Problems.Any())
     {
         Console.WriteLine("資料庫已經有題目，不重新匯入。");

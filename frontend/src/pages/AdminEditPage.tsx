@@ -29,6 +29,7 @@ export default function AdminEditPage() {
   const [problem, setProblem] = useState<ProblemEdit | null>(isNew ? createEmptyProblem(stages[0].code) : null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savedButUnlistedId, setSavedButUnlistedId] = useState<number | null>(null);
 
   const pageTitle = isNew ? "新增題目" : `編輯第 ${id} 題`;
   useDocumentTitle(pageTitle);
@@ -51,12 +52,24 @@ export default function AdminEditPage() {
       } else {
         await updateProblem(edited);
       }
-      await reload();
-      navigate(`/problem/${edited.id}`);
     } catch (saveError) {
       setError((saveError as Error).message);
       setSaving(false);
+      return;
     }
+
+    await showSavedProblem(edited.id);
+  }
+
+  async function showSavedProblem(problemId: number) {
+    try {
+      await reload();
+    } catch {
+      setSavedButUnlistedId(problemId);
+      return;
+    }
+
+    navigate(`/problem/${problemId}`);
   }
 
   return (
@@ -71,7 +84,16 @@ export default function AdminEditPage() {
       {problem === null && error === "" && <p className="message">載入中…</p>}
       {problem === null && error !== "" && <p className="form-error">{error}</p>}
 
-      {problem !== null && (
+      {savedButUnlistedId !== null && (
+        <p className="form-error">
+          已儲存，但題目清單更新失敗。
+          <button type="button" className="link-button" onClick={() => showSavedProblem(savedButUnlistedId)}>
+            重新載入清單
+          </button>
+        </p>
+      )}
+
+      {problem !== null && savedButUnlistedId === null && (
         <ProblemForm
           initial={problem}
           isNew={isNew}

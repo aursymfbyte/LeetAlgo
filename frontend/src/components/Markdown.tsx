@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { marked } from "marked";
 
 type MarkdownProps = {
@@ -6,6 +7,7 @@ type MarkdownProps = {
 };
 
 export default function Markdown({ text, className }: MarkdownProps) {
-  const html = marked.parse(text, { async: false });
+  const unsafeHtml = marked.parse(text, { async: false });
+  const html = DOMPurify.sanitize(unsafeHtml);
   return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }

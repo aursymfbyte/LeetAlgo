@@ -26,9 +26,15 @@ export default function AdminProblemsPage() {
     setError("");
     try {
       await deleteProblem(problem.id);
-      await reload();
     } catch (deleteError) {
       setError((deleteError as Error).message);
+      return;
+    }
+
+    try {
+      await reload();
+    } catch {
+      setError("已刪除，但題目清單更新失敗，請重新整理頁面。");
     }
   }
 

@@ -11,33 +11,55 @@ namespace LeetAlgo.Api.Controllers;
 [Route("api/search")]
 public class SearchController(LeetAlgoContext context) : ControllerBase
 {
+    private const int MaxResults = 50;
+
     [HttpGet]
     [EnableRateLimiting("search")]
-    public async Task<ActionResult<List<SearchResultDto>>> Search(string keyword)
+    public async Task<ActionResult<List<SearchResultDto>>> SearchInOldFormat(string keyword)
     {
         if (keyword.Length < 2)
         {
             return BadRequest("關鍵字至少要兩個字。");
         }
 
+        SearchResponseDto response = await FindMatches(keyword, null);
+        return response.Results;
+    }
+
+    [HttpGet("v2")]
+    [EnableRateLimiting("search")]
+    public async Task<ActionResult<SearchResponseDto>> Search(string keyword, string? stage)
+    {
+        if (keyword.Length < 2)
+        {
+            return BadRequest("關鍵字至少要兩個字。");
+        }
+
+        return await FindMatches(keyword, stage);
+    }
+
+    private async Task<SearchResponseDto> FindMatches(string keyword, string? stage)
+    {
         List<Problem> problems = await context.Problems
             .Include(problem => problem.Stage)
             .Include(problem => problem.Solutions)
+            .Where(problem => stage == null || problem.Stage.Code == stage)
             .Where(problem =>
                 problem.Statement.Contains(keyword) ||
                 problem.ComplexityAnalysis.Contains(keyword) ||
                 problem.Solutions.Any(solution => solution.Code.Contains(keyword)))
             .OrderBy(problem => problem.Stage.SortOrder)
             .ThenBy(problem => problem.Id)
-            .Take(50)
+            .Take(MaxResults + 1)
             .ToListAsync();
 
-        List<SearchResultDto> results = [];
-        foreach (Problem problem in problems)
-        {
-            results.Add(ToResult(problem, keyword));
-        }
-        return results;
+        List<SearchResultDto> results = problems
+            .Take(MaxResults)
+            .Select(problem => ToResult(problem, keyword))
+            .ToList();
+        bool truncated = problems.Count > MaxResults;
+
+        return new SearchResponseDto(results, truncated);
     }
 
     private static SearchResultDto ToResult(Problem problem, string keyword)

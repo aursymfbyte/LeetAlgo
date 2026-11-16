@@ -2,11 +2,12 @@ import { Link } from "react-router-dom";
 import { useCatalog } from "../lib/catalog";
 
 type PagerProps = {
-  index: number;
+  problemId: number;
 };
 
-export default function Pager({ index }: PagerProps) {
+export default function Pager({ problemId }: PagerProps) {
   const { problems } = useCatalog();
+  const index = problems.findIndex((problem) => problem.id === problemId);
   const previous = problems[index - 1];
   const next = problems[index + 1];
 

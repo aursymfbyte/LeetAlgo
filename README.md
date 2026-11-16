@@ -21,6 +21,7 @@ GitHub Pages ──HTTPS──▶ ASP.NET Core Web API ──▶ SQL Server
 | `backend/LeetAlgo.Api` | Web API |
 | `backend/LeetAlgo.Data` | 資料表模型，由 API 和命令列工具共用 |
 | `backend/LeetAlgo.Tools` | 命令列工具 |
+| `backend/LeetAlgo.Tests` | 後端測試 |
 
 ## 內容
 
@@ -43,6 +44,7 @@ frontend/src/
 │  ├─ AdminLoginPage.tsx
 │  ├─ AdminProblemsPage.tsx
 │  ├─ AdminEditPage.tsx
+│  ├─ AdminEditPage.test.tsx
 │  ├─ AdminTermsPage.tsx
 │  └─ AdminVisitsPage.tsx
 ├─ components/
@@ -60,6 +62,7 @@ frontend/src/
    ├─ animations/
    │  ├─ index.ts
    │  ├─ types.ts
+   │  ├─ animations.test.ts
    │  ├─ stage0.ts
    │  ├─ stage1.ts
    │  ├─ stage2.ts
@@ -98,6 +101,7 @@ frontend/src/
 | GET | `/api/problems/{id}` |
 | GET | `/api/comparisons` |
 | GET | `/api/search?keyword=` |
+| GET | `/api/search/v2?keyword=&stage=` |
 | GET | `/api/terms` |
 | PUT | `/api/terms` |
 | POST | `/api/auth/login` |
