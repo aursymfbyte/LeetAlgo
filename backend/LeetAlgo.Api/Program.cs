@@ -68,6 +68,12 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    LeetAlgoContext context = scope.ServiceProvider.GetRequiredService<LeetAlgoContext>();
+    context.Database.Migrate();
+}
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
