@@ -19,14 +19,26 @@ export function clearToken() {
   localStorage.removeItem(USER_KEY);
 }
 
+function readExpireTime(token: string): number | null {
+  try {
+    const payloadText = token.split(".")[1].replaceAll("-", "+").replaceAll("_", "/");
+    const payload = JSON.parse(atob(payloadText));
+    return payload.exp * 1000;
+  } catch {
+    return null;
+  }
+}
+
 export function isLoggedIn() {
   const token = getToken();
   if (token === null) {
     return false;
   }
 
-  const payloadText = token.split(".")[1].replaceAll("-", "+").replaceAll("_", "/");
-  const payload = JSON.parse(atob(payloadText));
-  const expireTime = payload.exp * 1000;
+  const expireTime = readExpireTime(token);
+  if (expireTime === null) {
+    clearToken();
+    return false;
+  }
   return Date.now() < expireTime;
 }

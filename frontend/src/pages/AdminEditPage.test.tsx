@@ -1,7 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { expect, test, vi } from "vitest";
-import { createProblem } from "../lib/api";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
+import { afterEach, expect, test, vi } from "vitest";
+import { createProblem, getProblemForEdit, ProblemEdit } from "../lib/api";
 import AdminEditPage from "./AdminEditPage";
 
 const { reload } = vi.hoisted(() => ({ reload: vi.fn() }));
@@ -15,6 +15,24 @@ vi.mock("../lib/api", () => ({
 vi.mock("../lib/catalog", () => ({
   useCatalog: () => ({ stages: [{ code: "階段 0", name: "陣列" }], problems: [], reload }),
 }));
+
+afterEach(cleanup);
+
+function savedProblem(id: number): ProblemEdit {
+  return {
+    id,
+    title: `第 ${id} 題的題名`,
+    stage: "階段 0",
+    difficulty: "簡單",
+    link: "https://leetcode.com",
+    statement: "題目內文",
+    complexity: "時間 O(n)",
+    complexityAnalysis: "複雜度說明",
+    optimal: { cs: "", py: "", c: "", cpp: "" },
+    readable: {},
+    comparison: null,
+  };
+}
 
 test("儲存成功但清單更新失敗時，只重新載入清單，不會再儲存一次", async () => {
   vi.mocked(createProblem).mockResolvedValue(undefined);
@@ -38,4 +56,23 @@ test("儲存成功但清單更新失敗時，只重新載入清單，不會再�
 
   await screen.findByText("題目頁");
   expect(createProblem).toHaveBeenCalledTimes(1);
+});
+
+test("從第 1 題的編輯頁換到第 2 題時，表單換成第 2 題的內容", async () => {
+  vi.mocked(getProblemForEdit).mockImplementation(async (id) => savedProblem(id));
+
+  render(
+    <MemoryRouter initialEntries={["/admin/problems/1/edit"]}>
+      <Link to="/admin/problems/2/edit">換到第 2 題</Link>
+      <Routes>
+        <Route path="/admin/problems/:id/edit" element={<AdminEditPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  await screen.findByDisplayValue("第 1 題的題名");
+  fireEvent.click(screen.getByRole("link", { name: "換到第 2 題" }));
+
+  await screen.findByDisplayValue("第 2 題的題名");
+  expect(screen.queryByDisplayValue("第 1 題的題名")).toBeNull();
 });

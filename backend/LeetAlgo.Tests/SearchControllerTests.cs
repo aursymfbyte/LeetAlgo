@@ -54,30 +54,14 @@ public class SearchControllerTests
 
         for (int id = 1; id <= EarlyStageProblemCount; id++)
         {
-            context.Problems.Add(CreateProblem(id, earlyStage));
+            context.Problems.Add(TestDatabase.CreateProblem(id, earlyStage));
         }
         for (int id = 101; id <= 100 + LateStageProblemCount; id++)
         {
-            context.Problems.Add(CreateProblem(id, lateStage));
+            context.Problems.Add(TestDatabase.CreateProblem(id, lateStage));
         }
         context.SaveChanges();
 
         return context;
-    }
-
-    private static Problem CreateProblem(int id, Stage stage)
-    {
-        return new Problem
-        {
-            Id = id,
-            Title = $"題目 {id}",
-            Stage = stage,
-            Difficulty = "簡單",
-            Link = "https://leetcode.com",
-            Statement = "題目內文",
-            Complexity = "時間 O(n)",
-            ComplexityAnalysis = "複雜度說明",
-            Solutions = [new Solution { Language = "cs", Version = Solution.Optimal, Code = "return 0;" }],
-        };
     }
 }

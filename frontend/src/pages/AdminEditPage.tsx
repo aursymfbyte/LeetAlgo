@@ -38,9 +38,25 @@ export default function AdminEditPage() {
     if (isNew) {
       return;
     }
+
+    let cancelled = false;
+    setProblem(null);
+    setError("");
+    setSavedButUnlistedId(null);
     getProblemForEdit(Number(id))
-      .then(setProblem)
-      .catch((loadError) => setError(loadError.message));
+      .then((loaded) => {
+        if (!cancelled) {
+          setProblem(loaded);
+        }
+      })
+      .catch((loadError: Error) => {
+        if (!cancelled) {
+          setError(loadError.message);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id, isNew]);
 
   async function handleSave(edited: ProblemEdit) {

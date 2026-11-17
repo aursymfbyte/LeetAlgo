@@ -5,6 +5,14 @@ import { languages } from "../lib/languages";
 import MarkdownEditor from "./MarkdownEditor";
 
 const DIFFICULTIES = ["簡單", "中等", "困難"];
+const TITLE_MAX_LENGTH = 200;
+const LINK_MAX_LENGTH = 300;
+const COMPLEXITY_MAX_LENGTH = 300;
+
+function LengthCount({ value, maxLength }: { value: string; maxLength: number }) {
+  const className = value.length >= maxLength ? "length-count at-limit" : "length-count";
+  return <span className={className}>{value.length} / {maxLength}</span>;
+}
 
 type ProblemFormProps = {
   initial: ProblemEdit;
@@ -75,7 +83,13 @@ export default function ProblemForm({ initial, isNew, stages, saving, error, onS
           </label>
           <label className="grow">
             題名
-            <input value={problem.title} required onChange={(event) => update({ title: event.target.value })} />
+            <input
+              value={problem.title}
+              maxLength={TITLE_MAX_LENGTH}
+              required
+              onChange={(event) => update({ title: event.target.value })}
+            />
+            <LengthCount value={problem.title} maxLength={TITLE_MAX_LENGTH} />
           </label>
         </div>
         <div className="form-row">
@@ -100,9 +114,11 @@ export default function ProblemForm({ initial, isNew, stages, saving, error, onS
             <input
               type="url"
               value={problem.link}
+              maxLength={LINK_MAX_LENGTH}
               required
               onChange={(event) => update({ link: event.target.value })}
             />
+            <LengthCount value={problem.link} maxLength={LINK_MAX_LENGTH} />
           </label>
         </div>
         <label>
@@ -110,9 +126,11 @@ export default function ProblemForm({ initial, isNew, stages, saving, error, onS
           <input
             value={problem.complexity}
             placeholder="例如：時間 O(n)，空間 O(1)"
+            maxLength={COMPLEXITY_MAX_LENGTH}
             required
             onChange={(event) => update({ complexity: event.target.value })}
           />
+          <LengthCount value={problem.complexity} maxLength={COMPLEXITY_MAX_LENGTH} />
         </label>
       </fieldset>
 
@@ -187,17 +205,21 @@ export default function ProblemForm({ initial, isNew, stages, saving, error, onS
               可讀性版的複雜度
               <input
                 value={comparison.readableComplexity}
+                maxLength={COMPLEXITY_MAX_LENGTH}
                 required
                 onChange={(event) => update({ comparison: { ...comparison, readableComplexity: event.target.value } })}
               />
+              <LengthCount value={comparison.readableComplexity} maxLength={COMPLEXITY_MAX_LENGTH} />
             </label>
             <label className="grow">
               效能的複雜度
               <input
                 value={comparison.optimalComplexity}
+                maxLength={COMPLEXITY_MAX_LENGTH}
                 required
                 onChange={(event) => update({ comparison: { ...comparison, optimalComplexity: event.target.value } })}
               />
+              <LengthCount value={comparison.optimalComplexity} maxLength={COMPLEXITY_MAX_LENGTH} />
             </label>
           </div>
         )}

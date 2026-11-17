@@ -1,10 +1,14 @@
 using LeetAlgo.Data;
+using LeetAlgo.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace LeetAlgo.Tests;
 
 public static class TestDatabase
 {
+    public static readonly string RepositorySourceData =
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "LeetAlgo.Tools", "SourceData");
+
     public static LeetAlgoContext CreateContext()
     {
         DbContextOptions<LeetAlgoContext> options = new DbContextOptionsBuilder<LeetAlgoContext>()
@@ -12,5 +16,21 @@ public static class TestDatabase
             .Options;
 
         return new LeetAlgoContext(options);
+    }
+
+    public static Problem CreateProblem(int id, Stage stage)
+    {
+        return new Problem
+        {
+            Id = id,
+            Title = $"題目 {id}",
+            Stage = stage,
+            Difficulty = "簡單",
+            Link = "https://leetcode.com",
+            Statement = "題目內文",
+            Complexity = "時間 O(n)",
+            ComplexityAnalysis = "複雜度說明",
+            Solutions = [new Solution { Language = "cs", Version = Solution.Optimal, Code = "return 0;" }],
+        };
     }
 }

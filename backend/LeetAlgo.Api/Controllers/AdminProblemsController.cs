@@ -12,6 +12,8 @@ namespace LeetAlgo.Api.Controllers;
 [Route("api/admin/problems")]
 public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
 {
+    private static readonly HashSet<string> Languages = ["cs", "py", "c", "cpp"];
+
     [HttpGet("{id}")]
     public async Task<ActionResult<ProblemEditDto>> GetProblem(int id)
     {
@@ -27,6 +29,12 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ProblemEditDto>> CreateProblem(ProblemEditDto dto)
     {
+        string? codeError = FindCodeError(dto);
+        if (codeError != null)
+        {
+            return BadRequest(codeError);
+        }
+
         if (await context.Problems.AnyAsync(problem => problem.Id == dto.Id))
         {
             return Conflict($"第 {dto.Id} 題已經存在。");
@@ -65,6 +73,12 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
         if (dto.Id != id)
         {
             return BadRequest("題號不能修改。");
+        }
+
+        string? codeError = FindCodeError(dto);
+        if (codeError != null)
+        {
+            return BadRequest(codeError);
         }
 
         Problem? problem = await FindProblem(id);
@@ -122,6 +136,21 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
     private async Task<Stage?> FindStage(string code)
     {
         return await context.Stages.FirstOrDefaultAsync(stage => stage.Code == code);
+    }
+
+    private static string? FindCodeError(ProblemEditDto dto)
+    {
+        if (!Languages.SetEquals(dto.Optimal.Keys))
+        {
+            return "效能版題解必須剛好包含 C#、Python、C、C++ 四種語言。";
+        }
+
+        if (!Languages.IsSupersetOf(dto.Readable.Keys))
+        {
+            return "可讀性版題解只能使用 C#、Python、C、C++。";
+        }
+
+        return null;
     }
 
     private static void SetCodes(Problem problem, string version, Dictionary<string, string> codes)

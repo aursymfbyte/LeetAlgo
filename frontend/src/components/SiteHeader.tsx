@@ -3,8 +3,8 @@ import { getToken, getUserName, isLoggedIn } from "../lib/auth";
 
 export default function SiteHeader() {
   useLocation();
-  const hasToken = getToken() !== null;
   const loggedIn = isLoggedIn();
+  const hasToken = getToken() !== null;
 
   return (
     <header className="site-header">
