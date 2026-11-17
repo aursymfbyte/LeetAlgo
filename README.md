@@ -170,7 +170,7 @@ dotnet run --project backend/LeetAlgo.Tools -- export <資料夾>
 | `backend/Dockerfile` | `build` | 以 .NET SDK 發佈 API 和命令列工具 |
 | | `tools` | .NET Runtime 映像檔，包含命令列工具，`SourceData` 位於 `/data` |
 | | `api` | ASP.NET Core Runtime 映像檔，包含 API |
-| `frontend/Dockerfile` | `build` | 以 Node 22 建置前端；`VITE_API_URL` 在建置時傳入，網站根路徑為 `/` |
+| `frontend/Dockerfile` | `build` | 建置前端；`VITE_API_URL` ，網站根路徑為 `/` |
 | | 最終映像檔 | Nginx 提供建置結果 |
 
 ### 設定
@@ -216,4 +216,4 @@ dotnet run --project backend/LeetAlgo.Tools -- export <資料夾>
 使用 GitHub Actions，前端和後端各有一個流程，推送到 `main` 且自己的資料夾有變更時執行，也可以在 Actions 頁面手動執行。
 
 - 前端：執行測試、建置，部署到 GitHub Pages。
-- 後端：在 Linux 執行全部後端測試，通過後在 Windows 發佈 API，以 Web Deploy 上傳到 MonsterASP.NET。測試失敗時不部署。
+- 後端：在 Linux 執行全部後端測試，通過後在 Windows 發佈 API 。測試失敗時不部署。
