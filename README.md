@@ -1,113 +1,244 @@
 # LeetAlgo
 
-LeetCode 題解網站，共 156 題，每題包含 C#、Python、C、C++ 四種語言的題解和複雜度分析。
+LeetCode 題解網站，將 156 題分成 8 個階段。每題都有 C#、Python、C、C++ 四種語言的題解和複雜度分析。[瀏覽網站](https://aursymfbyte.github.io/LeetAlgo/)
 
-網站：https://aursymfbyte.github.io/LeetAlgo/
-
-使用技術：
-- 前端：React、TypeScript、Vite
-- 後端：C#、ASP.NET Core Web API、Entity Framework Core、SQL Server
-- 測試：Vitest、Testing Library、xUnit、Testcontainers
-- 部署：GitHub Actions、GitHub Pages、MonsterASP.NET
-- 本機環境：Docker Compose、Kubernetes（kind）
-
-## 架構
-
-```
-GitHub Pages ──HTTPS──▶ ASP.NET Core Web API ──▶ SQL Server
-```
-
-| 位置 | 內容 |
-|---|---|
-| `frontend/` | React 前端 |
-| `backend/LeetAlgo.Api` | Web API |
-| `backend/LeetAlgo.Data` | 資料表模型與 migration，由 API 和命令列工具共用 |
-| `backend/LeetAlgo.Tools` | 命令列工具與題庫匯出檔 |
-| `backend/LeetAlgo.Tests` | 後端測試 |
-| `docker-compose.yml` | 本機執行環境 |
-| `k8s/` | 本機 kind 部署腳本與 Nginx 設定 |
-
-## 內容
-
-- 依題目的種類分成 8 個階段：陣列與雜湊表、雙指針與滑動視窗、二分搜尋、堆疊與佇列、鏈結串列與二元樹與回溯、圖論、貪心與動態規劃、設計題。
-- 每題提供效能版題解，部分題目另有可讀性版，並比較兩版的複雜度。
+- 每題提供效能版題解，部分題目另有可讀性版，可比較兩版的複雜度。
 - 每題附暴力解與效率解的逐步動畫。
-- 首頁的搜尋除了題號和題名，也會搜尋題目內文、複雜度說明和程式碼。
+- 首頁可依題號或題名搜尋，也能搜尋題目內文、複雜度說明和程式碼。
 
-## 前端
+## 架構與部署
 
-```
-frontend/src/
-├─ main.tsx
-├─ App.tsx
-├─ styles.css
-├─ pages/
-│  ├─ IndexPage.tsx
-│  ├─ ProblemPage.tsx
-│  ├─ ComparePage.tsx
-│  ├─ TermsPage.tsx
-│  ├─ AdminLoginPage.tsx
-│  ├─ AdminProblemsPage.tsx
-│  ├─ AdminEditPage.tsx
-│  ├─ AdminEditPage.test.tsx
-│  ├─ AdminTermsPage.tsx
-│  └─ AdminVisitsPage.tsx
-├─ components/
-│  ├─ SiteHeader.tsx
-│  ├─ AnimationSection.tsx
-│  ├─ AnimationViewer.tsx
-│  ├─ CodeViewer.tsx
-│  ├─ ContentMatches.tsx
-│  ├─ ContentMatches.test.tsx
-│  ├─ Markdown.tsx
-│  ├─ MarkdownEditor.tsx
-│  ├─ Pager.tsx
-│  ├─ ProblemForm.tsx
-│  └─ RequireAdmin.tsx
-└─ lib/
-   ├─ animations/
-   │  ├─ index.ts
-   │  ├─ types.ts
-   │  ├─ animations.test.ts
-   │  ├─ stage0.ts
-   │  ├─ stage1.ts
-   │  ├─ stage2.ts
-   │  ├─ stage3.ts
-   │  ├─ stage4a.ts
-   │  ├─ stage4b.ts
-   │  ├─ stage4c.ts
-   │  ├─ stage5a.ts
-   │  ├─ stage5b.ts
-   │  ├─ stage6a.ts
-   │  ├─ stage6b.ts
-   │  ├─ stage6c.ts
-   │  ├─ stage7a.ts
-   │  ├─ stage7b.ts
-   │  └─ stage7c.ts
-   ├─ api.ts
-   ├─ auth.ts
-   ├─ auth.test.ts
-   ├─ catalog.tsx
-   ├─ complexity.ts
-   ├─ languages.ts
-   ├─ useDocumentTitle.ts
-   └─ visitor.ts
+```text
+正式站部署
+GitHub Actions（推送到 main 時依變更執行）
+├─ 前端 → 測試 → Vite 建置 → GitHub Pages
+└─ 後端 → 測試 → .NET 發佈 → MonsterASP.NET
+
+本機執行
+Docker Compose   Nginx（8081）──提供前端──▶ 瀏覽器 ──▶ API（8090）──▶ SQL Server
+Kubernetes（kind） 瀏覽器 ──▶ Nginx（18081）──/api──▶ API（2 個副本）──▶ SQL Server
 ```
 
-## 後端
+## 專案目錄
 
-資料表：Stages、Problems、Solutions、Comparisons、Terms、Admins、Visits、AnimationMessages、CatalogVersions。
+<details>
+<summary>前端目錄樹</summary>
 
-### API
+```text
+frontend/
+├─ src/
+│  ├─ components/
+│  │  ├─ AnimationSection.tsx
+│  │  ├─ AnimationViewer.tsx
+│  │  ├─ CodeViewer.tsx
+│  │  ├─ ContentMatches.test.tsx
+│  │  ├─ ContentMatches.tsx
+│  │  ├─ Markdown.tsx
+│  │  ├─ MarkdownEditor.tsx
+│  │  ├─ Pager.tsx
+│  │  ├─ ProblemForm.tsx
+│  │  ├─ RequireAdmin.tsx
+│  │  └─ SiteHeader.tsx
+│  ├─ lib/
+│  │  ├─ animations/
+│  │  │  ├─ animations.test.ts
+│  │  │  ├─ index.ts
+│  │  │  ├─ stage0.ts
+│  │  │  ├─ stage1.ts
+│  │  │  ├─ stage2.ts
+│  │  │  ├─ stage3.ts
+│  │  │  ├─ stage4a.ts
+│  │  │  ├─ stage4b.ts
+│  │  │  ├─ stage4c.ts
+│  │  │  ├─ stage5a.ts
+│  │  │  ├─ stage5b.ts
+│  │  │  ├─ stage6a.ts
+│  │  │  ├─ stage6b.ts
+│  │  │  ├─ stage6c.ts
+│  │  │  ├─ stage7a.ts
+│  │  │  ├─ stage7b.ts
+│  │  │  ├─ stage7c.ts
+│  │  │  └─ types.ts
+│  │  ├─ api.test.ts
+│  │  ├─ api.ts
+│  │  ├─ auth.test.ts
+│  │  ├─ auth.ts
+│  │  ├─ catalog.tsx
+│  │  ├─ complexity.ts
+│  │  ├─ languages.ts
+│  │  ├─ useDocumentTitle.ts
+│  │  └─ visitor.ts
+│  ├─ pages/
+│  │  ├─ AdminEditPage.test.tsx
+│  │  ├─ AdminEditPage.tsx
+│  │  ├─ AdminLoginPage.tsx
+│  │  ├─ AdminProblemsPage.tsx
+│  │  ├─ AdminTermsPage.tsx
+│  │  ├─ AdminVisitsPage.test.tsx
+│  │  ├─ AdminVisitsPage.tsx
+│  │  ├─ ComparePage.tsx
+│  │  ├─ IndexPage.tsx
+│  │  ├─ ProblemPage.tsx
+│  │  └─ TermsPage.tsx
+│  ├─ App.tsx
+│  ├─ main.tsx
+│  └─ styles.css
+├─ .dockerignore
+├─ .env.development
+├─ .env.production
+├─ .gitignore
+├─ Dockerfile
+├─ index.html
+├─ package-lock.json
+├─ package.json
+├─ tsconfig.json
+└─ vite.config.ts
+```
 
-| 方法 | 網址 |
+</details>
+
+<details>
+<summary>後端目錄樹</summary>
+
+```text
+backend/
+├─ LeetAlgo.Api/
+│  ├─ Auth/
+│  │  ├─ JwtSettings.cs
+│  │  └─ TokenService.cs
+│  ├─ Controllers/
+│  │  ├─ AdminProblemsController.cs
+│  │  ├─ AnimationMessagesController.cs
+│  │  ├─ AuthController.cs
+│  │  ├─ ComparisonsController.cs
+│  │  ├─ ProblemsController.cs
+│  │  ├─ SearchController.cs
+│  │  ├─ StagesController.cs
+│  │  ├─ TermsController.cs
+│  │  └─ VisitsController.cs
+│  ├─ Dtos/
+│  │  ├─ AnimationMessageDto.cs
+│  │  ├─ ComparisonDto.cs
+│  │  ├─ LoginDtos.cs
+│  │  ├─ ProblemDetailDto.cs
+│  │  ├─ ProblemEditDto.cs
+│  │  ├─ ProblemSummaryDto.cs
+│  │  ├─ SearchResultDto.cs
+│  │  ├─ StageDto.cs
+│  │  ├─ TermsDto.cs
+│  │  └─ VisitDtos.cs
+│  ├─ Properties/
+│  │  └─ launchSettings.json
+│  ├─ wwwroot/
+│  │  ├─ favicon.ico
+│  │  └─ robots.txt
+│  ├─ appsettings.Development.json
+│  ├─ appsettings.json
+│  ├─ LeetAlgo.Api.csproj
+│  ├─ Program.cs
+│  └─ SiteOperations.cs
+├─ LeetAlgo.Data/
+│  ├─ Migrations/
+│  │  ├─ 20261107223818_InitialCreate.cs
+│  │  ├─ 20261107223818_InitialCreate.Designer.cs
+│  │  ├─ 20261113063140_AddVisits.cs
+│  │  ├─ 20261113063140_AddVisits.Designer.cs
+│  │  ├─ 20261114002300_AddTerms.cs
+│  │  ├─ 20261114002300_AddTerms.Designer.cs
+│  │  ├─ 20261115092049_AddAnimationMessages.cs
+│  │  ├─ 20261115092049_AddAnimationMessages.Designer.cs
+│  │  ├─ 20261118022305_AddProblemRevision.cs
+│  │  ├─ 20261118022305_AddProblemRevision.Designer.cs
+│  │  ├─ 20261118080041_AddCatalogVersion.cs
+│  │  ├─ 20261118080041_AddCatalogVersion.Designer.cs
+│  │  └─ LeetAlgoContextModelSnapshot.cs
+│  ├─ Models/
+│  │  ├─ Admin.cs
+│  │  ├─ AnimationMessage.cs
+│  │  ├─ CatalogVersion.cs
+│  │  ├─ Comparison.cs
+│  │  ├─ Problem.cs
+│  │  ├─ Solution.cs
+│  │  ├─ Stage.cs
+│  │  ├─ Terms.cs
+│  │  └─ Visit.cs
+│  ├─ LeetAlgo.Data.csproj
+│  └─ LeetAlgoContext.cs
+├─ LeetAlgo.Tests/
+│  ├─ AdminProblemsControllerTests.cs
+│  ├─ LeetAlgo.Tests.csproj
+│  ├─ SearchControllerTests.cs
+│  ├─ SiteOperationsTests.cs
+│  ├─ SourceDataFolderTests.cs
+│  ├─ SqlServerTests.cs
+│  └─ TestDatabase.cs
+├─ LeetAlgo.Tools/
+│  ├─ SourceData/
+│  │  ├─ solutions/
+│  │  │  ├─ API-設計題與互動式題/
+│  │  │  ├─ 階段0-陣列字串雜湊表/
+│  │  │  ├─ 階段1-雙指針與滑動視窗/
+│  │  │  ├─ 階段2-二分搜尋/
+│  │  │  ├─ 階段3-堆疊佇列單調堆疊/
+│  │  │  ├─ 階段4-鏈結串列二元樹回溯/
+│  │  │  ├─ 階段5-網格圖與圖論/
+│  │  │  └─ 階段6-貪心與動態規劃/
+│  │  ├─ animation-messages.json
+│  │  ├─ problems.json
+│  │  └─ terms.md
+│  ├─ appsettings.json
+│  ├─ LeetAlgo.Tools.csproj
+│  ├─ PasswordInput.cs
+│  ├─ Program.cs
+│  ├─ SourceDataFolder.cs
+│  └─ SourceDataRecords.cs
+├─ .dockerignore
+├─ .gitignore
+├─ Dockerfile
+├─ dotnet-tools.json
+└─ LeetAlgoApi.slnx
+```
+
+</details>
+
+## 本機執行
+
+### Docker Compose
+
+在專案根目錄依照 [.env.example](.env.example) 建立 `.env`，設定 `DB_PASSWORD`（至少 8 碼，包含大寫、小寫和數字）及 `JWT_KEY`（至少 32 碼），再執行以下指令。
+
+```sh
+docker compose up --build
+```
+
+啟動時會套用 migration 並匯入題庫，已有題目就略過匯入。啟動後可開啟[本機網站](http://localhost:8081/) 或 [API](http://localhost:8090/)。
+
+- 建立後台帳號用 `docker compose run --rm -it tools create-admin <帳號>`。
+- 停止服務用 `docker compose down`。加上 `-v` 會一併刪除本機資料庫。
+
+### Kubernetes（kind）
+
+在 Windows 啟動 Docker Desktop 的 Linux 容器引擎，備妥 PowerShell 7.3 以上、kubectl 和 kind，從專案根目錄執行以下指令。
+
+```powershell
+pwsh -File ./k8s/start.ps1
+```
+
+腳本會建立或更新 `leetalgo-local` 叢集。終端機印出網址後即可開啟[本機網站](http://127.0.0.1:18081/)。建立後台帳號可加上 `-AdminName <帳號>`。刪除整個叢集會一併移除資料庫。
+
+## API 路由
+
+<details>
+<summary> API 路由表</summary>
+
+| 方法 | 路徑 |
 |---|---|
 | GET | `/api/stages` |
 | GET | `/api/problems` |
 | GET | `/api/problems/{id}` |
 | GET | `/api/comparisons` |
-| GET | `/api/search?keyword=` |
-| GET | `/api/search/v2?keyword=&stage=` |
+| GET | `/api/search?keyword={keyword}` |
+| GET | `/api/search/v2?keyword={keyword}&stage={stage}` |
 | GET | `/api/terms` |
 | PUT | `/api/terms` |
 | POST | `/api/auth/login` |
@@ -120,130 +251,29 @@ frontend/src/
 | DELETE | `/api/visits` |
 | GET | `/api/animation-messages/{problemId}` |
 | PUT | `/api/animation-messages/{problemId}` |
-| DELETE | `/api/animation-messages/{problemId}?version=&step=` |
+| DELETE | `/api/animation-messages/{problemId}?version={version}&step={step}` |
+| GET | `/` |
+| GET | `/health/live` |
+| GET | `/health/ready` |
 
-### 命令列工具
+</details>
 
-網站內容以資料庫為準，後台的修改只寫入資料庫。`backend/LeetAlgo.Tools/SourceData` 是資料庫內容的匯出檔，用於備份及建立新的資料庫。
+## 題庫匯出與匯入
 
-| 指令 | 用途 |
+後台修改會寫入資料庫。要保留目前的題庫，可用 `LeetAlgo.Tools` 的 `export <空資料夾>` 匯出題目、題解、名詞解釋和動畫說明。建立新資料庫時，可用 `import <資料夾>` 匯回。專案附的題庫放在 [SourceData](backend/LeetAlgo.Tools/SourceData/)。
+
+## 測試與部署
+
+| 範圍 | 執行方式 |
 |---|---|
-| `import <資料夾>` | 把匯出檔匯入資料庫；資料庫已有題目時略過 |
-| `export <資料夾>` | 把題目、題解、名詞解釋和動畫說明匯出到空的資料夾 |
-| `create-admin <帳號>` | 建立管理者帳號 |
+| 前端（Vitest、Testing Library） | 在 `frontend/` 執行 `npm test` |
+| 後端（xUnit、Testcontainers） | 啟動 Docker，在專案根目錄執行 `dotnet test backend/LeetAlgo.Tests` |
 
-匯出檔結構：
+推送到 `main` 時，GitHub Actions 會依前端或後端的變更執行測試，通過後部署。也可以在 Actions 頁面手動執行。
 
-| 位置 | 內容 |
-|---|---|
-| `problems.json` | 階段、題目清單、可讀性版的語言、兩版比較 |
-| `solutions/<階段>/<題號-題名>/` | `題目.md`、`複雜度說明.md`、四種語言的效能版題解 |
-| `solutions/<階段>/<題號-題名>/可讀性版/` | 可讀性版題解 |
-| `terms.md` | 複雜度名詞解釋 |
-| `animation-messages.json` | 後台修改過的動畫說明 |
+## 監控與快取
 
-## Docker
-
-`docker-compose.yml` 在本機啟動完整網站。
-
-| 服務 | 內容 | 連接埠 |
-|---|---|---|
-| `db` | SQL Server 2022，資料存於 volume `db-data` | 不對外開放 |
-| `tools` | 套用 migration 並匯入 `SourceData`，完成後結束 | — |
-| `api` | Web API | 8090 |
-| `web` | 前端，由 Nginx 提供 | 8081 |
-
-啟動順序為 `db` 通過健康檢查、`tools` 執行完成、`api`、`web`。
-
-### Dockerfile
-
-| 檔案 | 階段 | 內容 |
-|---|---|---|
-| `backend/Dockerfile` | `build` | 以 .NET SDK 發佈 API 和命令列工具 |
-| | `tools` | .NET Runtime 映像檔，包含命令列工具，`SourceData` 位於 `/data` |
-| | `api` | ASP.NET Core Runtime 映像檔，包含 API |
-| `frontend/Dockerfile` | `build` | 建置前端；`VITE_API_URL` ，網站根路徑為 `/` |
-| | 最終映像檔 | Nginx 提供建置結果 |
-
-### 設定
-
-`.env` 不納入版本控制，格式見 `.env.example`。
-
-| 變數 | 用途 |
-|---|---|
-| `DB_PASSWORD` | SQL Server `sa` 帳號的密碼，至少 8 個字元，包含大寫、小寫和數字 |
-| `JWT_KEY` | token 的簽章金鑰，至少 32 個字元 |
-
-### 指令
-
-| 指令 | 用途 |
-|---|---|
-| `docker compose up --build` | 建置並啟動；網站為 http://localhost:8081 ，API 為 http://localhost:8090 |
-| `docker compose run --rm -it tools create-admin <帳號>` | 建立管理者帳號 |
-| `docker compose down` | 停止並移除容器，保留資料庫資料 |
-| `docker compose down -v` | 停止並移除容器和資料庫資料 |
-
-## 紀錄與監控
-
-| 網址 | 檢查內容 | 回應 |
-|---|---|---|
-| `/health/live` | API 程序能否回應 | 200 |
-| `/health/ready` | API 能否連到 SQL Server 並執行查詢 | 正常 200，資料庫無法使用時 503 |
-
-遇到未預期的伺服器錯誤時，前端顯示的追蹤碼對應到 API 錯誤紀錄的 `TraceId`，細節保留在伺服器端。Docker Compose 可用 `docker compose logs api` 查詢。
-
-`Monitor LeetAlgo` 是從 GitHub Actions 執行的外部監控。在預設分支啟用後，約每 5 分鐘分別檢查正式網站首頁與 API 的 `/health/ready`。檢查失敗會等 30 秒重試，連續兩次失敗才為該服務開一張 GitHub Issue；持續故障沿用同一張，恢復時自動關閉。Repository 需啟用 Actions 與 Issues，並允許該 workflow 寫入 Issues。若要收到通知，可在 repository 的 Watch 設定訂閱 Issues。要立即檢查，可在 Actions 頁面手動執行 `Monitor LeetAlgo`。
-
-## 快取與效能
-
-部署 API 時，可設定 `CatalogCache__Enabled=false` 關閉清單快取。
-
-## 本機 Kubernetes
-
-在 Windows 啟動 Docker Desktop 的 Linux 容器引擎，準備 PowerShell 7.3 以上、kubectl 和 kind，從專案根目錄執行以下指令。若 kind 未加入 PATH，可加上 `-Kind 'C:\工具\kind.exe'` 指定位置。
-
-```powershell
-pwsh -File ./k8s/start.ps1
-```
-
-網站位於 [http://127.0.0.1:18081/] `leetalgo-local` 叢集，為 SQL 與 JWT 產生專用憑證，並將專案映像檔載入 kind。
-
-再次執行會更新本機服務，已有題目時會略過匯入。刪除整個 kind 叢集則會一併移除。首次需要登入本機後台時，可執行 `pwsh -File ./k8s/start.ps1 -AdminName <帳號>`，依提示設定密碼。
-
-以下指令查詢本機叢集的服務狀態與最近 10 分鐘的 API 紀錄。
-
-```powershell
-$config = Join-Path $env:LOCALAPPDATA 'LeetAlgo/kind/kubeconfig'
-kubectl --kubeconfig $config -n leetalgo get pods,svc,pvc
-kubectl --kubeconfig $config -n leetalgo logs -l app=api --since=10m --prefix
-```
-
-## 測試
-
-| 範圍 | 指令 |
-|---|---|
-| 前端 | `npm test`（在 `frontend/` 執行） |
-| 後端 | `dotnet test backend/LeetAlgo.Tests` |
-
-| 測試 | 驗證內容 |
-|---|---|
-| `animations.test.ts` | 動畫題號與題庫一致 |
-| `AdminEditPage.test.tsx` | 清單更新重試、切換題號、儲存衝突後保留草稿 |
-| `AdminVisitsPage.test.tsx` | 取消清空、確認後歸零及失敗重試 |
-| `ContentMatches.test.tsx` | 內文搜尋失敗或舊版結果可能不完整時顯示提示 |
-| `api.test.ts` | 新舊搜尋 API 相容、階段篩選、伺服器錯誤與追蹤碼 |
-| `auth.test.ts` | 格式錯誤的登入 token 視為未登入並清除 |
-| `SearchControllerTests` | 階段篩選、結果截斷、舊版搜尋格式 |
-| `AdminProblemsControllerTests` | 題解語言檢查 |
-| `SourceDataFolderTests` | 匯出檔匯入，以及匯出後再匯入的內容一致 |
-| `SqlServerTests` | migration、編輯版本衝突與交易回復、匯出指令結束碼、欄位長度、唯一索引、刪除與連帶刪除、讀取 API 與不分大小寫的搜尋 |
-| `SiteOperationsTests` | 兩個 API 執行個體之間的快取更新、首次匯入、資料庫故障時的健康檢查與錯誤追蹤 |
-
-`SqlServerTests` 與 `SiteOperationsTests` 以 Testcontainers 啟動 SQL Server，執行時需要 Docker。
-
-## 自動部署
-
-使用 GitHub Actions，前端和後端各有一個流程，推送到 `main` 且自己的資料夾有變更時執行，也可以在 Actions 頁面手動執行。
-
-- 前端：執行測試、建置，部署到 GitHub Pages。
-- 後端：在 Linux 執行全部後端測試，通過後在 Windows 發佈 API 。測試失敗時不部署。
+- `/health/live` 檢查 API 能否回應，`/health/ready` 檢查資料庫能否查詢，資料庫無法使用時回傳 503。
+- [Monitor LeetAlgo](.github/workflows/monitor-site.yml) 約每 5 分鐘檢查正式網站首頁和 API。失敗後等 30 秒重試，連續兩次失敗就開一張 Issue，恢復時自動關閉。
+- 前端遇到未預期的伺服器錯誤時會顯示追蹤碼。本機可用 `docker compose logs api` 找到相同的 `TraceId`。
+- 題目與階段清單預設啟用快取，可設定 `CatalogCache__Enabled=false` 關閉。
