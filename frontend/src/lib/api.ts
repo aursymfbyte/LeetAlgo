@@ -50,6 +50,7 @@ export type ProblemEdit = {
   optimal: Record<string, string>;
   readable: Record<string, string>;
   comparison: ComparisonEdit | null;
+  revision?: string;
 };
 
 export type SearchResult = {
@@ -62,7 +63,7 @@ export type SearchResult = {
 
 export type SearchResponse = {
   results: SearchResult[];
-  truncated: boolean;
+  truncated: boolean | null;
 };
 
 export type Terms = {
@@ -126,12 +127,23 @@ export function getComparisons() {
   return getJson<Comparison[]>("/api/comparisons");
 }
 
-export function searchProblems(keyword: string, stage: string) {
+export async function searchProblems(keyword: string, stage: string): Promise<SearchResponse> {
   const query = new URLSearchParams({ keyword });
   if (stage !== "all") {
     query.set("stage", stage);
   }
-  return getJson<SearchResponse>(`/api/search/v2?${query}`);
+
+  const response = await request(`/api/search/v2?${query}`);
+  if (response.status === 404) {
+    const oldQuery = new URLSearchParams({ keyword });
+    const matches = await getJson<SearchResult[]>(`/api/search?${oldQuery}`);
+    const results = stage === "all" ? matches : matches.filter((match) => match.stage === stage);
+    return { results, truncated: matches.length >= 50 ? null : false };
+  }
+  if (!response.ok) {
+    throw new Error("內文和程式碼搜尋失敗。");
+  }
+  return response.json();
 }
 
 export function getTerms() {
@@ -230,6 +242,10 @@ export async function updateTerms(terms: Terms) {
 export async function getVisitStats(): Promise<VisitStats> {
   const response = await sendAdminRequest("GET", "/api/visits");
   return response.json();
+}
+
+export async function clearVisitStats() {
+  await sendAdminRequest("DELETE", "/api/visits");
 }
 
 export async function saveAnimationMessage(problemId: number, message: AnimationMessage) {

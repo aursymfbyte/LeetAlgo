@@ -118,11 +118,12 @@ API 啟動時自動套用尚未執行的 migration。
 | DELETE | `/api/admin/problems/{id}` |
 | POST | `/api/visits` |
 | GET | `/api/visits` |
+| DELETE | `/api/visits` |
 | GET | `/api/animation-messages/{problemId}` |
 | PUT | `/api/animation-messages/{problemId}` |
 | DELETE | `/api/animation-messages/{problemId}?version=&step=` |
 
-`/api/search/v2` 先依階段篩選，最多回傳 50 筆，並標示結果是否被截斷。`/api/search` 維持舊版的陣列格式，供部署前已開啟的頁面使用。
+管理者可在造訪統計頁清空所有日期的紀錄，累計與每日訪客數會從下一次造訪重新計算。
 
 ### 命令列工具
 
@@ -133,6 +134,8 @@ API 啟動時自動套用尚未執行的 migration。
 | `import <資料夾>` | 把匯出檔匯入資料庫；資料庫已有題目時略過 |
 | `export <資料夾>` | 把題目、題解、名詞解釋和動畫說明匯出到空的資料夾 |
 | `create-admin <帳號>` | 建立管理者帳號 |
+
+匯出成功的結束碼為 0。目的資料夾已有內容時，工具會保留原有檔案、將原因寫入標準錯誤輸出，並以結束碼 1 結束。
 
 連線字串讀取 `appsettings.json`，可由環境變數 `ConnectionStrings__LeetAlgo` 覆寫。
 
@@ -201,13 +204,15 @@ dotnet run --project backend/LeetAlgo.Tools -- export <資料夾>
 | 測試 | 驗證內容 |
 |---|---|
 | `animations.test.ts` | 動畫題號與題庫一致 |
-| `AdminEditPage.test.tsx` | 儲存成功但清單更新失敗時不重複儲存；切換題號時表單換成新的題目 |
-| `ContentMatches.test.tsx` | 內文搜尋失敗時顯示提示 |
+| `AdminEditPage.test.tsx` | 清單更新重試、切換題號、儲存衝突後保留草稿 |
+| `AdminVisitsPage.test.tsx` | 取消清空、確認後歸零及失敗重試 |
+| `ContentMatches.test.tsx` | 內文搜尋失敗或舊版結果可能不完整時顯示提示 |
+| `api.test.ts` | 新舊搜尋 API 相容、階段篩選與錯誤處理 |
 | `auth.test.ts` | 格式錯誤的登入 token 視為未登入並清除 |
 | `SearchControllerTests` | 階段篩選、結果截斷、舊版搜尋格式 |
 | `AdminProblemsControllerTests` | 題解語言檢查 |
 | `SourceDataFolderTests` | 匯出檔匯入，以及匯出後再匯入的內容一致 |
-| `SqlServerTests` | 驗證 migration、欄位長度、唯一索引、刪除說明、刪除題目時的連帶刪除、讀取 API 的查詢與不分大小寫的搜尋 |
+| `SqlServerTests` | migration、編輯版本衝突與交易回復、匯出指令結束碼、欄位長度、唯一索引、刪除與連帶刪除、讀取 API 與不分大小寫的搜尋 |
 
 `SqlServerTests` 以 Testcontainers 啟動 SQL Server 容器，執行時需要 Docker；其餘後端測試使用 EF Core 的記憶體資料庫。
 

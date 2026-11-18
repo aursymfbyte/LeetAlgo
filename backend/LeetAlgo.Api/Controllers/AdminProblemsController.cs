@@ -13,6 +13,7 @@ namespace LeetAlgo.Api.Controllers;
 public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
 {
     private static readonly HashSet<string> Languages = ["cs", "py", "c", "cpp"];
+    private const string EditConflict = "這份草稿的版本已過期。請保留本頁，另開分頁載入最新題目，再合併修改。";
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ProblemEditDto>> GetProblem(int id)
@@ -93,6 +94,22 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
             return BadRequest($"找不到階段：{dto.Stage}");
         }
 
+        if (dto.Revision != problem.Revision)
+        {
+            return Conflict(EditConflict);
+        }
+
+        await using var transaction = await context.Database.BeginTransactionAsync();
+        problem.Revision = Guid.NewGuid();
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict(EditConflict);
+        }
+
         problem.Title = dto.Title;
         problem.Stage = stage;
         problem.Difficulty = dto.Difficulty;
@@ -106,6 +123,7 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
 
         await context.SaveChangesAsync();
 
+        await transaction.CommitAsync();
         return ToEditDto(problem);
     }
 
@@ -119,7 +137,14 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
         }
 
         context.Problems.Remove(problem);
-        await context.SaveChangesAsync();
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Conflict("題目已變更，請重新載入清單後再確認刪除。");
+        }
 
         return NoContent();
     }
@@ -221,6 +246,7 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
             problem.ComplexityAnalysis,
             problem.CodesOf(Solution.Optimal),
             problem.CodesOf(Solution.Readable),
-            comparison);
+            comparison,
+            problem.Revision);
     }
 }

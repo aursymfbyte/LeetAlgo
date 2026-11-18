@@ -3,6 +3,7 @@ namespace LeetAlgo.Data.Models;
 public class Problem
 {
     public int Id { get; set; }
+    public Guid Revision { get; set; }
     public required string Title { get; set; }
     public int StageId { get; set; }
     public Stage Stage { get; set; } = null!;

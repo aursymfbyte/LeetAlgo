@@ -25,7 +25,7 @@ if (command == "import")
 }
 else if (command == "export")
 {
-    ExportProblems(context, args[1]);
+    return ExportProblems(context, args[1]);
 }
 else if (command == "create-admin")
 {
@@ -36,6 +36,8 @@ else
     Console.WriteLine($"不認識的指令：{command}");
     Console.WriteLine("可用的指令：import <資料夾>、export <資料夾>、create-admin <帳號>");
 }
+
+return 0;
 
 static void ImportProblems(LeetAlgoContext context, string sourceFolder)
 {
@@ -51,17 +53,18 @@ static void ImportProblems(LeetAlgoContext context, string sourceFolder)
     PrintCounts(context);
 }
 
-static void ExportProblems(LeetAlgoContext context, string targetFolder)
+static int ExportProblems(LeetAlgoContext context, string targetFolder)
 {
     if (Directory.Exists(targetFolder) && Directory.EnumerateFileSystemEntries(targetFolder).Any())
     {
-        Console.WriteLine($"資料夾 {targetFolder} 裡已經有檔案，請指定一個新的或空的資料夾。");
-        return;
+        Console.Error.WriteLine($"資料夾 {targetFolder} 裡已經有檔案，請指定一個新的或空的資料夾。");
+        return 1;
     }
 
     new SourceDataFolder(targetFolder).ExportFrom(context);
     PrintCounts(context);
     Console.WriteLine($"已匯出到：{Path.GetFullPath(targetFolder)}");
+    return 0;
 }
 
 static void PrintCounts(LeetAlgoContext context)

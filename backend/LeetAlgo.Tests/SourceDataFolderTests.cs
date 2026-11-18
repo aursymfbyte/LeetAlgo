@@ -48,6 +48,41 @@ public class SourceDataFolderTests
         Assert.Equal(Describe(original), Describe(restored));
     }
 
+    [Theory]
+    [InlineData("- 連結：https://example.com/notes\n- 難度：延伸挑戰")]
+    [InlineData("    範例程式碼\n\n延伸閱讀\n- 連結：https://example.com/notes\n")]
+    public void ExportFrom_ThenImportTo_PreservesStatementBodyAndHeader(string body)
+    {
+        using LeetAlgoContext original = CreateContextWithTerms();
+        Stage stage = new() { Code = "階段 0", Name = "陣列" };
+        Problem problem = TestDatabase.CreateProblem(1, stage);
+        problem.Statement = body;
+        foreach (string language in new[] { "py", "c", "cpp" })
+        {
+            problem.Solutions.Add(new Solution { Language = language, Version = Solution.Optimal, Code = "0" });
+        }
+        original.Problems.Add(problem);
+        original.SaveChanges();
+
+        DirectoryInfo folder = Directory.CreateTempSubdirectory("LeetAlgoStatement_");
+        try
+        {
+            SourceDataFolder backup = new(folder.FullName);
+            backup.ExportFrom(original);
+            using LeetAlgoContext restored = CreateContextWithTerms();
+            backup.ImportTo(restored);
+
+            Problem saved = restored.Problems.Single();
+            Assert.Equal(problem.Link, saved.Link);
+            Assert.Equal(problem.Difficulty, saved.Difficulty);
+            Assert.Equal(body, saved.Statement);
+        }
+        finally
+        {
+            folder.Delete(recursive: true);
+        }
+    }
+
     private static LeetAlgoContext CreateContextWithTerms()
     {
         LeetAlgoContext context = TestDatabase.CreateContext();

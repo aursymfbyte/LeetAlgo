@@ -11,6 +11,7 @@ public record ProblemEditDto(
     string ComplexityAnalysis,
     Dictionary<string, string> Optimal,
     Dictionary<string, string> Readable,
-    ComparisonEditDto? Comparison);
+    ComparisonEditDto? Comparison,
+    Guid? Revision = null);
 
 public record ComparisonEditDto(string ReadableComplexity, string OptimalComplexity);

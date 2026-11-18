@@ -60,4 +60,12 @@ public class VisitsController(LeetAlgoContext context) : ControllerBase
 
         return new VisitStatsDto(totalVisitors, days);
     }
+
+    [HttpDelete]
+    [Authorize]
+    public async Task<IActionResult> ClearVisits()
+    {
+        await context.Visits.ExecuteDeleteAsync();
+        return NoContent();
+    }
 }

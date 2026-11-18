@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, expect, test, vi } from "vitest";
-import { createProblem, getProblemForEdit, ProblemEdit } from "../lib/api";
+import { createProblem, getProblemForEdit, ProblemEdit, updateProblem } from "../lib/api";
 import AdminEditPage from "./AdminEditPage";
 
 const { reload } = vi.hoisted(() => ({ reload: vi.fn() }));
@@ -56,6 +56,27 @@ test("儲存成功但清單更新失敗時，只重新載入清單，不會再�
 
   await screen.findByText("題目頁");
   expect(createProblem).toHaveBeenCalledTimes(1);
+});
+
+test("編輯送出原始版本，遇到衝突時保留未儲存的草稿", async () => {
+  const problem = { ...savedProblem(1), revision: "40368688-bece-42d1-90b9-cde30de4732e" };
+  vi.mocked(getProblemForEdit).mockResolvedValueOnce(problem);
+  vi.mocked(updateProblem).mockRejectedValueOnce(new Error("這份草稿的版本已過期。"));
+  const { container } = render(
+    <MemoryRouter initialEntries={["/admin/problems/1/edit"]}>
+      <Routes>
+        <Route path="/admin/problems/:id/edit" element={<AdminEditPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  const input = await screen.findByDisplayValue(problem.title);
+  fireEvent.change(input, { target: { value: "我的草稿" } });
+  fireEvent.submit(container.querySelector("form")!);
+
+  await screen.findByText("這份草稿的版本已過期。");
+  expect(updateProblem).toHaveBeenCalledWith({ ...problem, title: "我的草稿" });
+  expect(screen.getByDisplayValue("我的草稿")).toBe(input);
 });
 
 test("從第 1 題的編輯頁換到第 2 題時，表單換成第 2 題的內容", async () => {

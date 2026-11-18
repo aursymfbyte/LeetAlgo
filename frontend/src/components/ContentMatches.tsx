@@ -73,7 +73,7 @@ export default function ContentMatches({ keyword, stage }: ContentMatchesProps) 
   }
 
   const { results, truncated } = matches;
-  if (results.length === 0) {
+  if (results.length === 0 && truncated !== null) {
     return null;
   }
 
@@ -85,6 +85,7 @@ export default function ContentMatches({ keyword, stage }: ContentMatchesProps) 
         內文和程式碼裡找到的題目
         <span className="count">{countText}</span>
       </h2>
+      {truncated === null && <p className="message">舊版搜尋只提供全站前 50 題，可能還有其他符合的題目。</p>}
       <ul className="problem-list">
         {results.map((result) => (
           <li key={result.id}>

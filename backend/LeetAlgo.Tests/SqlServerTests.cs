@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using LeetAlgo.Api.Controllers;
 using LeetAlgo.Api.Dtos;
 using LeetAlgo.Data;
 using LeetAlgo.Data.Models;
 using LeetAlgo.Tools;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.MsSql;
@@ -62,6 +64,21 @@ public class SqlServerTests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public void AddProblemRevision_AssignsVersionsToExistingProblems()
+    {
+        using LeetAlgoContext context = CreateContextWithOneProblem();
+        context.ChangeTracker.Clear();
+        context.Database.Migrate("20261115092049_AddAnimationMessages");
+
+        context.Database.Migrate();
+
+        Problem problem = context.Problems.Include(problem => problem.Solutions).Single();
+        Assert.NotEqual(Guid.Empty, problem.Revision);
+        Assert.Equal("題目 1", problem.Title);
+        Assert.Equal("return 0;", Assert.Single(problem.Solutions).Code);
+    }
+
+    [Fact]
     public void ImportTo_WithRepositorySourceData_FitsTheColumnLimits()
     {
         using LeetAlgoContext context = fixture.CreateMigratedContext();
@@ -69,6 +86,44 @@ public class SqlServerTests(SqlServerFixture fixture)
         new SourceDataFolder(TestDatabase.RepositorySourceData).ImportTo(context);
 
         Assert.NotEmpty(context.Problems);
+    }
+
+    [Fact]
+    public async Task ExportCommand_ReportsSuccessThenRefusesToOverwriteTheBackup()
+    {
+        using LeetAlgoContext context = CreateContextWithOneProblem();
+        DirectoryInfo folder = Directory.CreateTempSubdirectory("LeetAlgoExport_");
+        try
+        {
+            ProcessStartInfo command = new("dotnet")
+            {
+                UseShellExecute = false,
+                RedirectStandardError = true,
+                ArgumentList = { typeof(SourceDataFolder).Assembly.Location, "export", folder.FullName },
+            };
+            command.Environment["ConnectionStrings__LeetAlgo"] = context.Database.GetConnectionString();
+            using Process first = Process.Start(command)!;
+            string firstError = await first.StandardError.ReadToEndAsync();
+            await first.WaitForExitAsync();
+            Assert.True(first.ExitCode == 0, firstError);
+            string backupFile = Path.Combine(folder.FullName, "problems.json");
+            string backup = File.ReadAllText(backupFile);
+            Assert.Contains("題目 1", backup);
+            context.Problems.Single().Title = "匯出後修改";
+            context.SaveChanges();
+
+            using Process second = Process.Start(command)!;
+            string secondError = await second.StandardError.ReadToEndAsync();
+            await second.WaitForExitAsync();
+
+            Assert.Equal(1, second.ExitCode);
+            Assert.Contains("裡已經有檔案", secondError);
+            Assert.Equal(backup, File.ReadAllText(backupFile));
+        }
+        finally
+        {
+            folder.Delete(recursive: true);
+        }
     }
 
     [Fact]
@@ -102,6 +157,63 @@ public class SqlServerTests(SqlServerFixture fixture)
         Assert.Equal(2, visits.Days.Count);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task UpdateProblem_StaleTabCannotOverwriteSolutionOrComparison(bool reloadBeforeSave)
+    {
+        using LeetAlgoContext first = fixture.CreateMigratedContext();
+        new SourceDataFolder(TestDatabase.RepositorySourceData).ImportTo(first);
+        var options = new DbContextOptionsBuilder<LeetAlgoContext>()
+            .UseSqlServer(first.Database.GetConnectionString()).Options;
+        using LeetAlgoContext second = new(options);
+        AdminProblemsController firstTab = new(first);
+        AdminProblemsController secondTab = new(second);
+        ProblemEditDto original = (await firstTab.GetProblem(ProblemId)).Value!;
+        ProblemEditDto draft = (await secondTab.GetProblem(ProblemId)).Value!;
+        var codes = new Dictionary<string, string>(original.Optimal) { ["cs"] = "新版 C#" };
+        var comparison = new ComparisonEditDto("新版可讀性分析", "新版效能分析");
+
+        var saved = await firstTab.UpdateProblem(ProblemId, original with { Optimal = codes, Comparison = comparison });
+        Assert.NotNull(saved.Value);
+        Assert.NotEqual(original.Revision, saved.Value.Revision);
+        if (reloadBeforeSave)
+        {
+            second.ChangeTracker.Clear();
+        }
+        var stale = await secondTab.UpdateProblem(ProblemId, draft with { Title = "舊分頁草稿" });
+
+        Assert.IsType<ConflictObjectResult>(stale.Result);
+        second.ChangeTracker.Clear();
+        var latest = (await secondTab.GetProblem(ProblemId)).Value!;
+        Assert.Equal(original.Title, latest.Title);
+        Assert.Equal(codes, latest.Optimal);
+        Assert.Equal(comparison, latest.Comparison);
+        Assert.Equal(saved.Value.Revision, latest.Revision);
+        var missingVersion = await secondTab.UpdateProblem(ProblemId, latest with { Revision = null });
+        Assert.IsType<ConflictObjectResult>(missingVersion.Result);
+        var merged = await secondTab.UpdateProblem(ProblemId, latest with { Title = "合併後的題名" });
+        Assert.Equal("合併後的題名", merged.Value!.Title);
+    }
+
+    [Fact]
+    public async Task UpdateProblem_FailedSaveRollsBackRevisionAndContent()
+    {
+        using LeetAlgoContext context = fixture.CreateMigratedContext();
+        new SourceDataFolder(TestDatabase.RepositorySourceData).ImportTo(context);
+        AdminProblemsController controller = new(context);
+        ProblemEditDto original = (await controller.GetProblem(ProblemId)).Value!;
+        var invalid = original with { Title = new string('長', 201), Readable = [] };
+
+        await Assert.ThrowsAsync<DbUpdateException>(() => controller.UpdateProblem(ProblemId, invalid));
+
+        context.ChangeTracker.Clear();
+        ProblemEditDto latest = (await controller.GetProblem(ProblemId)).Value!;
+        Assert.Equal(original.Revision, latest.Revision);
+        Assert.Equal(original.Title, latest.Title);
+        Assert.Equal(original.Readable, latest.Readable);
+    }
+
     [Fact]
     public async Task DeleteProblem_RemovesItsSolutionsComparisonAndMessages()
     {
@@ -130,6 +242,34 @@ public class SqlServerTests(SqlServerFixture fixture)
         await controller.RecordVisit(request);
 
         Assert.Equal(1, context.Visits.Count());
+    }
+
+    [Fact]
+    public async Task ClearVisits_RemovesAllDatesAndCountsReturningVisitorsAgain()
+    {
+        using LeetAlgoContext context = CreateContextWithOneProblem();
+        VisitsController controller = new(context);
+        VisitRequest visitor = new(Guid.NewGuid());
+        DateOnly start = new(2020, 1, 1);
+        for (int day = 0; day < 31; day++)
+        {
+            context.Visits.Add(new Visit { Date = start.AddDays(day), VisitorId = visitor.VisitorId });
+        }
+        await context.SaveChangesAsync();
+        await controller.RecordVisit(visitor);
+        Assert.Equal(30, (await controller.GetVisits()).Days.Count);
+
+        Assert.IsType<NoContentResult>(await controller.ClearVisits());
+        VisitStatsDto cleared = await controller.GetVisits();
+        Assert.Equal(0, cleared.TotalVisitors);
+        Assert.Empty(cleared.Days);
+        Assert.Single(context.Problems);
+
+        await controller.RecordVisit(visitor);
+        await controller.RecordVisit(visitor);
+        VisitStatsDto restarted = await controller.GetVisits();
+        Assert.Equal(1, restarted.TotalVisitors);
+        Assert.Equal(1, Assert.Single(restarted.Days).Visitors);
     }
 
     [Fact]

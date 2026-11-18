@@ -26,6 +26,7 @@ public class LeetAlgoContext(DbContextOptions<LeetAlgoContext> options) : DbCont
         modelBuilder.Entity<Problem>(table =>
         {
             table.Property(problem => problem.Id).ValueGeneratedNever();
+            table.Property(problem => problem.Revision).HasDefaultValueSql("NEWID()").IsConcurrencyToken();
             table.Property(problem => problem.Title).HasMaxLength(200);
             table.Property(problem => problem.Difficulty).HasMaxLength(10);
             table.Property(problem => problem.Link).HasMaxLength(300);

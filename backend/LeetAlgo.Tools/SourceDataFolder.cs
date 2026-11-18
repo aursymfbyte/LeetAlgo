@@ -172,28 +172,38 @@ public class SourceDataFolder(string sourceFolder)
 
     private static Statement ReadStatement(string path)
     {
-        string[] lines = ReadText(path).Split('\n');
+        string[] lines = File.ReadAllLines(path);
         string difficulty = "";
         string link = "";
-        List<string> body = [];
-
-        foreach (string line in lines.Skip(1))
+        int bodyStart = 1;
+        while (bodyStart < lines.Length && string.IsNullOrWhiteSpace(lines[bodyStart]))
         {
-            if (line.StartsWith(DifficultyPrefix))
+            bodyStart++;
+        }
+
+        while (bodyStart < lines.Length)
+        {
+            string line = lines[bodyStart];
+            if (line.StartsWith(DifficultyPrefix, StringComparison.Ordinal))
             {
                 difficulty = line.Substring(DifficultyPrefix.Length).Trim();
             }
-            else if (line.StartsWith(LinkPrefix))
+            else if (line.StartsWith(LinkPrefix, StringComparison.Ordinal))
             {
                 link = line.Substring(LinkPrefix.Length).Trim();
             }
             else
             {
-                body.Add(line);
+                break;
             }
+            bodyStart++;
         }
 
-        return new Statement(difficulty, link, string.Join("\n", body).Trim());
+        if (bodyStart < lines.Length && string.IsNullOrWhiteSpace(lines[bodyStart]))
+        {
+            bodyStart++;
+        }
+        return new Statement(difficulty, link, string.Join('\n', lines.Skip(bodyStart)));
     }
 
     private static ProblemEntry ToEntry(Problem problem)

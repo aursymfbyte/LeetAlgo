@@ -1,6 +1,7 @@
 using LeetAlgo.Api.Controllers;
 using LeetAlgo.Api.Dtos;
 using LeetAlgo.Data;
+using LeetAlgo.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LeetAlgo.Tests;
@@ -10,27 +11,54 @@ public class AdminProblemsControllerTests
     [Fact]
     public async Task CreateProblem_WithoutEveryOptimalLanguage_ReturnsBadRequest()
     {
-        using LeetAlgoContext context = TestDatabase.CreateContext();
+        using LeetAlgoContext context = CreateContextWithStage();
         AdminProblemsController controller = new(context);
         Dictionary<string, string> optimal = new() { ["cs"] = "return 0;" };
 
         ActionResult<ProblemEditDto> result = await controller.CreateProblem(CreateDto(optimal, []));
 
-        Assert.IsType<BadRequestObjectResult>(result.Result);
+        var error = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("效能版題解必須剛好包含 C#、Python、C、C++ 四種語言。", error.Value);
         Assert.Empty(context.Problems);
     }
 
     [Fact]
     public async Task CreateProblem_WithUnknownReadableLanguage_ReturnsBadRequest()
     {
-        using LeetAlgoContext context = TestDatabase.CreateContext();
+        using LeetAlgoContext context = CreateContextWithStage();
         AdminProblemsController controller = new(context);
         Dictionary<string, string> readable = new() { ["java"] = "return 0;" };
 
         ActionResult<ProblemEditDto> result = await controller.CreateProblem(CreateDto(EveryLanguage(), readable));
 
-        Assert.IsType<BadRequestObjectResult>(result.Result);
+        var error = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("可讀性版題解只能使用 C#、Python、C、C++。", error.Value);
         Assert.Empty(context.Problems);
+    }
+
+    [Fact]
+    public async Task CreateProblem_WithSupportedLanguages_SavesBothVersions()
+    {
+        using LeetAlgoContext context = CreateContextWithStage();
+        AdminProblemsController controller = new(context);
+        ProblemEditDto dto = CreateDto(EveryLanguage(), new() { ["cs"] = "return 1;" });
+
+        var result = await controller.CreateProblem(dto);
+
+        var created = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var saved = Assert.IsType<ProblemEditDto>(created.Value);
+        Assert.Equal(dto.Optimal, saved.Optimal);
+        Assert.Equal(dto.Readable, saved.Readable);
+        Assert.Single(context.Problems);
+        Assert.Equal(5, context.Solutions.Count());
+    }
+
+    private static LeetAlgoContext CreateContextWithStage()
+    {
+        LeetAlgoContext context = TestDatabase.CreateContext();
+        context.Stages.Add(new Stage { Code = "階段 0", Name = "陣列" });
+        context.SaveChanges();
+        return context;
     }
 
     private static Dictionary<string, string> EveryLanguage()
