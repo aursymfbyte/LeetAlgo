@@ -16,7 +16,9 @@ public static class TestDatabase
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new LeetAlgoContext(options);
+        LeetAlgoContext context = new(options);
+        context.Database.EnsureCreated();
+        return context;
     }
 
     public static Problem CreateProblem(int id, Stage stage)

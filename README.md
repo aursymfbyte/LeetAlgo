@@ -9,7 +9,7 @@ LeetCode 題解網站，共 156 題，每題包含 C#、Python、C、C++ 四種�
 - 後端：C#、ASP.NET Core Web API、Entity Framework Core、SQL Server
 - 測試：Vitest、Testing Library、xUnit、Testcontainers
 - 部署：GitHub Actions、GitHub Pages、MonsterASP.NET
-- 本機環境：Docker Compose
+- 本機環境：Docker Compose、Kubernetes（kind）
 
 ## 架構
 
@@ -25,6 +25,7 @@ GitHub Pages ──HTTPS──▶ ASP.NET Core Web API ──▶ SQL Server
 | `backend/LeetAlgo.Tools` | 命令列工具與題庫匯出檔 |
 | `backend/LeetAlgo.Tests` | 後端測試 |
 | `docker-compose.yml` | 本機執行環境 |
+| `k8s/` | 本機 kind 部署腳本與 Nginx 設定 |
 
 ## 內容
 
@@ -95,9 +96,7 @@ frontend/src/
 
 ## 後端
 
-資料表：Stages、Problems、Solutions、Comparisons、Terms、Admins、Visits、AnimationMessages。
-
-API 啟動時自動套用尚未執行的 migration。
+資料表：Stages、Problems、Solutions、Comparisons、Terms、Admins、Visits、AnimationMessages、CatalogVersions。
 
 ### API
 
@@ -123,8 +122,6 @@ API 啟動時自動套用尚未執行的 migration。
 | PUT | `/api/animation-messages/{problemId}` |
 | DELETE | `/api/animation-messages/{problemId}?version=&step=` |
 
-管理者可在造訪統計頁清空所有日期的紀錄，累計與每日訪客數會從下一次造訪重新計算。
-
 ### 命令列工具
 
 網站內容以資料庫為準，後台的修改只寫入資料庫。`backend/LeetAlgo.Tools/SourceData` 是資料庫內容的匯出檔，用於備份及建立新的資料庫。
@@ -134,14 +131,6 @@ API 啟動時自動套用尚未執行的 migration。
 | `import <資料夾>` | 把匯出檔匯入資料庫；資料庫已有題目時略過 |
 | `export <資料夾>` | 把題目、題解、名詞解釋和動畫說明匯出到空的資料夾 |
 | `create-admin <帳號>` | 建立管理者帳號 |
-
-匯出成功的結束碼為 0。目的資料夾已有內容時，工具會保留原有檔案、將原因寫入標準錯誤輸出，並以結束碼 1 結束。
-
-連線字串讀取 `appsettings.json`，可由環境變數 `ConnectionStrings__LeetAlgo` 覆寫。
-
-```bash
-dotnet run --project backend/LeetAlgo.Tools -- export <資料夾>
-```
 
 匯出檔結構：
 
@@ -194,6 +183,41 @@ dotnet run --project backend/LeetAlgo.Tools -- export <資料夾>
 | `docker compose down` | 停止並移除容器，保留資料庫資料 |
 | `docker compose down -v` | 停止並移除容器和資料庫資料 |
 
+## 紀錄與監控
+
+| 網址 | 檢查內容 | 回應 |
+|---|---|---|
+| `/health/live` | API 程序能否回應 | 200 |
+| `/health/ready` | API 能否連到 SQL Server 並執行查詢 | 正常 200，資料庫無法使用時 503 |
+
+遇到未預期的伺服器錯誤時，前端顯示的追蹤碼對應到 API 錯誤紀錄的 `TraceId`，細節保留在伺服器端。Docker Compose 可用 `docker compose logs api` 查詢。
+
+`Monitor LeetAlgo` 是從 GitHub Actions 執行的外部監控。在預設分支啟用後，約每 5 分鐘分別檢查正式網站首頁與 API 的 `/health/ready`。檢查失敗會等 30 秒重試，連續兩次失敗才為該服務開一張 GitHub Issue；持續故障沿用同一張，恢復時自動關閉。Repository 需啟用 Actions 與 Issues，並允許該 workflow 寫入 Issues。若要收到通知，可在 repository 的 Watch 設定訂閱 Issues。要立即檢查，可在 Actions 頁面手動執行 `Monitor LeetAlgo`。
+
+## 快取與效能
+
+部署 API 時，可設定 `CatalogCache__Enabled=false` 關閉清單快取。
+
+## 本機 Kubernetes
+
+在 Windows 啟動 Docker Desktop 的 Linux 容器引擎，準備 PowerShell 7.3 以上、kubectl 和 kind，從專案根目錄執行以下指令。若 kind 未加入 PATH，可加上 `-Kind 'C:\工具\kind.exe'` 指定位置。
+
+```powershell
+pwsh -File ./k8s/start.ps1
+```
+
+網站位於 [http://127.0.0.1:18081/] `leetalgo-local` 叢集，為 SQL 與 JWT 產生專用憑證，並將專案映像檔載入 kind。
+
+再次執行會更新本機服務，已有題目時會略過匯入。刪除整個 kind 叢集則會一併移除。首次需要登入本機後台時，可執行 `pwsh -File ./k8s/start.ps1 -AdminName <帳號>`，依提示設定密碼。
+
+以下指令查詢本機叢集的服務狀態與最近 10 分鐘的 API 紀錄。
+
+```powershell
+$config = Join-Path $env:LOCALAPPDATA 'LeetAlgo/kind/kubeconfig'
+kubectl --kubeconfig $config -n leetalgo get pods,svc,pvc
+kubectl --kubeconfig $config -n leetalgo logs -l app=api --since=10m --prefix
+```
+
 ## 測試
 
 | 範圍 | 指令 |
@@ -207,14 +231,15 @@ dotnet run --project backend/LeetAlgo.Tools -- export <資料夾>
 | `AdminEditPage.test.tsx` | 清單更新重試、切換題號、儲存衝突後保留草稿 |
 | `AdminVisitsPage.test.tsx` | 取消清空、確認後歸零及失敗重試 |
 | `ContentMatches.test.tsx` | 內文搜尋失敗或舊版結果可能不完整時顯示提示 |
-| `api.test.ts` | 新舊搜尋 API 相容、階段篩選與錯誤處理 |
+| `api.test.ts` | 新舊搜尋 API 相容、階段篩選、伺服器錯誤與追蹤碼 |
 | `auth.test.ts` | 格式錯誤的登入 token 視為未登入並清除 |
 | `SearchControllerTests` | 階段篩選、結果截斷、舊版搜尋格式 |
 | `AdminProblemsControllerTests` | 題解語言檢查 |
 | `SourceDataFolderTests` | 匯出檔匯入，以及匯出後再匯入的內容一致 |
 | `SqlServerTests` | migration、編輯版本衝突與交易回復、匯出指令結束碼、欄位長度、唯一索引、刪除與連帶刪除、讀取 API 與不分大小寫的搜尋 |
+| `SiteOperationsTests` | 兩個 API 執行個體之間的快取更新、首次匯入、資料庫故障時的健康檢查與錯誤追蹤 |
 
-`SqlServerTests` 以 Testcontainers 啟動 SQL Server 容器，執行時需要 Docker；其餘後端測試使用 EF Core 的記憶體資料庫。
+`SqlServerTests` 與 `SiteOperationsTests` 以 Testcontainers 啟動 SQL Server，執行時需要 Docker。
 
 ## 自動部署
 

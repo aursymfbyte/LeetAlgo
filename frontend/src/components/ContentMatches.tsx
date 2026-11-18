@@ -36,12 +36,12 @@ type ContentMatchesProps = {
 
 export default function ContentMatches({ keyword, stage }: ContentMatchesProps) {
   const [matches, setMatches] = useState(NO_MATCHES);
-  const [failed, setFailed] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (keyword.length < 2) {
       setMatches(NO_MATCHES);
-      setFailed(false);
+      setError("");
       return;
     }
 
@@ -51,13 +51,13 @@ export default function ContentMatches({ keyword, stage }: ContentMatchesProps) 
         .then((found) => {
           if (!cancelled) {
             setMatches(found);
-            setFailed(false);
+            setError("");
           }
         })
-        .catch(() => {
+        .catch((searchError: Error) => {
           if (!cancelled) {
             setMatches(NO_MATCHES);
-            setFailed(true);
+            setError(searchError.message);
           }
         });
     }, 300);
@@ -68,8 +68,8 @@ export default function ContentMatches({ keyword, stage }: ContentMatchesProps) 
     };
   }, [keyword, stage]);
 
-  if (failed) {
-    return <p className="message">內文和程式碼的搜尋暫時無法使用，請稍後再試。</p>;
+  if (error) {
+    return <p className="message">內文和程式碼的搜尋暫時無法使用。{error}</p>;
   }
 
   const { results, truncated } = matches;

@@ -63,6 +63,7 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
         SetComparison(problem, dto.Comparison);
 
         context.Problems.Add(problem);
+        context.AdvanceCatalogVersion();
         await context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetProblem), new { id = problem.Id }, ToEditDto(problem));
@@ -121,6 +122,7 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
         SetCodes(problem, Solution.Readable, dto.Readable);
         SetComparison(problem, dto.Comparison);
 
+        context.AdvanceCatalogVersion();
         await context.SaveChangesAsync();
 
         await transaction.CommitAsync();
@@ -137,6 +139,7 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
         }
 
         context.Problems.Remove(problem);
+        context.AdvanceCatalogVersion();
         try
         {
             await context.SaveChangesAsync();

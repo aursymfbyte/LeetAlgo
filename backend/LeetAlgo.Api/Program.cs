@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using LeetAlgo.Api;
 using LeetAlgo.Api.Auth;
 using LeetAlgo.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.AddSiteOperations();
 builder.Services.AddDbContext<LeetAlgoContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("LeetAlgo")));
 
@@ -16,6 +18,7 @@ string[] allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy => policy
         .WithOrigins(allowedOrigins)
+        .WithExposedHeaders("X-Trace-Id")
         .AllowAnyHeader()
         .AllowAnyMethod()));
 
@@ -68,19 +71,28 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-using (IServiceScope scope = app.Services.CreateScope())
+if (app.Configuration.GetValue("Database:MigrateOnStartup", true))
 {
+    using IServiceScope scope = app.Services.CreateScope();
     LeetAlgoContext context = scope.ServiceProvider.GetRequiredService<LeetAlgoContext>();
     context.Database.Migrate();
 }
 
+app.UseSiteDiagnostics();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseRateLimiter();
+if (!app.Configuration.GetValue<bool>("RateLimiting:AtGateway"))
+{
+    app.UseRateLimiter();
+}
+if (app.Configuration.GetValue("CatalogCache:Enabled", true))
+{
+    app.UseOutputCache();
+}
 
 app.MapGet("/", () => "LeetAlgo API");
 app.MapControllers();

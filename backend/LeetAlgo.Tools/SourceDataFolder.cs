@@ -42,6 +42,7 @@ public class SourceDataFolder(string sourceFolder)
         context.Problems.AddRange(CreateProblems(problemList, stages));
         context.AnimationMessages.AddRange(CreateAnimationMessages());
         context.Terms.Single().Content = ReadText(Path.Combine(sourceFolder, TermsFile));
+        context.AdvanceCatalogVersion();
         context.SaveChanges();
     }
 

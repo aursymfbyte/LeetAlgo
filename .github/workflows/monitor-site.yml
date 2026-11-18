@@ -1,0 +1,73 @@
+name: Monitor LeetAlgo
+
+on:
+  schedule:
+    - cron: '2-59/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: leetalgo-site-monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: Website
+            url: https://aursymfbyte.github.io/LeetAlgo/
+            expected: '<div id="root">'
+          - service: API
+            url: https://aursym-leetalgo-api.runasp.net/health/ready
+            expected: Healthy
+    steps:
+      - name: Check endpoint
+        id: probe
+        env:
+          URL: ${{ matrix.url }}
+          EXPECTED: ${{ matrix.expected }}
+        run: |
+          check() {
+            local page
+            page=$(curl --silent --show-error --fail --location --max-time 15 "$URL") &&
+              [[ "$page" == *"$EXPECTED"* ]]
+          }
+          if check; then
+            echo "healthy=true" >> "$GITHUB_OUTPUT"
+          else
+            sleep 30
+            if check; then
+              echo "healthy=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "healthy=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Report outage or recovery
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SERVICE: ${{ matrix.service }}
+          HEALTHY: ${{ steps.probe.outputs.healthy }}
+          URL: ${{ matrix.url }}
+        run: |
+          title="LeetAlgo monitoring - $SERVICE unavailable"
+          issue=$(gh api --paginate --method GET "repos/$GITHUB_REPOSITORY/issues" -f state=open -f 'creator=github-actions[bot]' -F per_page=100 --jq ".[] | select(.title == \"$title\") | .number")
+          run="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if [[ "$HEALTHY" == true ]]; then
+            if [[ -n "$issue" ]]; then
+              gh issue close "$issue" --repo "$GITHUB_REPOSITORY" --comment "Recovered: $run"
+            fi
+          else
+            if [[ -z "$issue" ]]; then
+              gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "Two consecutive checks failed for $URL. Run: $run"
+            fi
+            exit 1
+          fi

@@ -2,6 +2,7 @@ using LeetAlgo.Api.Dtos;
 using LeetAlgo.Data;
 using LeetAlgo.Data.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 
 namespace LeetAlgo.Api.Controllers;
@@ -11,6 +12,7 @@ namespace LeetAlgo.Api.Controllers;
 public class ProblemsController(LeetAlgoContext context) : ControllerBase
 {
     [HttpGet]
+    [OutputCache(PolicyName = "Problems")]
     public async Task<List<ProblemSummaryDto>> GetProblems()
     {
         return await context.Problems

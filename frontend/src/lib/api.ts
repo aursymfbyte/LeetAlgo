@@ -89,11 +89,17 @@ export type VisitStats = {
 const API_URL: string = import.meta.env.VITE_API_URL;
 
 async function request(path: string, options?: RequestInit) {
+  let response: Response;
   try {
-    return await fetch(API_URL + path, options);
+    response = await fetch(API_URL + path, options);
   } catch {
     throw new Error("連不上伺服器，請稍後再試。");
   }
+  const traceId = response.headers.get("X-Trace-Id");
+  if (response.status >= 500 && traceId) {
+    throw new Error(`伺服器暫時無法完成請求。查詢編號 ${traceId}`);
+  }
+  return response;
 }
 
 async function getJson<T>(path: string): Promise<T> {

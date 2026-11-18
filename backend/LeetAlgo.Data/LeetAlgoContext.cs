@@ -7,6 +7,7 @@ public class LeetAlgoContext(DbContextOptions<LeetAlgoContext> options) : DbCont
 {
     public DbSet<Stage> Stages => Set<Stage>();
     public DbSet<Problem> Problems => Set<Problem>();
+    public DbSet<CatalogVersion> CatalogVersions => Set<CatalogVersion>();
     public DbSet<Solution> Solutions => Set<Solution>();
     public DbSet<Comparison> Comparisons => Set<Comparison>();
     public DbSet<Admin> Admins => Set<Admin>();
@@ -14,8 +15,21 @@ public class LeetAlgoContext(DbContextOptions<LeetAlgoContext> options) : DbCont
     public DbSet<Terms> Terms => Set<Terms>();
     public DbSet<AnimationMessage> AnimationMessages => Set<AnimationMessage>();
 
+    public void AdvanceCatalogVersion()
+    {
+        CatalogVersion version = CatalogVersions.Local.SingleOrDefault()
+            ?? CatalogVersions.Attach(new CatalogVersion { Id = 1 }).Entity;
+        version.Stamp = Guid.NewGuid();
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<CatalogVersion>(table =>
+        {
+            table.Property(version => version.Id).ValueGeneratedNever();
+            table.HasData(new CatalogVersion { Id = 1, Stamp = Guid.Empty });
+        });
+
         modelBuilder.Entity<Stage>(table =>
         {
             table.Property(stage => stage.Code).HasMaxLength(20);

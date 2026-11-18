@@ -3,6 +3,15 @@ import { searchProblems, SearchResult } from "./api";
 
 afterEach(() => vi.unstubAllGlobals());
 
+test("伺服器錯誤顯示後端提供的查詢編號", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, {
+    status: 500,
+    headers: { "X-Trace-Id": "test-request-id" },
+  })));
+
+  await expect(searchProblems("return", "all")).rejects.toThrow("查詢編號 test-request-id");
+});
+
 function match(id: number, stage: string): SearchResult {
   return { id, title: `題目 ${id}`, stage, place: "cs", snippet: "return" };
 }

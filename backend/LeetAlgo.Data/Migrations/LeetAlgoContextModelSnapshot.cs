@@ -79,6 +79,26 @@ namespace LeetAlgo.Data.Migrations
                     b.ToTable("AnimationMessages");
                 });
 
+            modelBuilder.Entity("LeetAlgo.Data.Models.CatalogVersion", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("Stamp")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CatalogVersions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Stamp = new Guid("00000000-0000-0000-0000-000000000000")
+                        });
+                });
+
             modelBuilder.Entity("LeetAlgo.Data.Models.Comparison", b =>
                 {
                     b.Property<int>("ProblemId")

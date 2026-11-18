@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: import-BUILD_TAG
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: tools
+          image: leetalgo-tools:BUILD_TAG
+          imagePullPolicy: Never
+          args: ["import", "/data"]
+          env:
+            - name: ConnectionStrings__LeetAlgo
+              valueFrom:
+                secretKeyRef:
+                  name: leetalgo
+                  key: sql-connection

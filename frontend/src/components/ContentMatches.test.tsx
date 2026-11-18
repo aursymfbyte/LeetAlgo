@@ -30,5 +30,5 @@ test("搜尋失敗時顯示提示，而不是當成沒有結果", async () => {
     </MemoryRouter>,
   );
 
-  await screen.findByText("內文和程式碼的搜尋暫時無法使用，請稍後再試。");
+  await screen.findByText("內文和程式碼的搜尋暫時無法使用。讀取失敗");
 });
