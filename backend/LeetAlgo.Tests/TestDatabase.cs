@@ -6,8 +6,9 @@ namespace LeetAlgo.Tests;
 
 public static class TestDatabase
 {
-    public static readonly string RepositorySourceData =
-        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "LeetAlgo.Tools", "SourceData");
+    public static readonly string ToolsProjectDirectory =
+        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "LeetAlgo.Tools"));
+    public static readonly string RepositorySourceData = Path.Combine(ToolsProjectDirectory, "SourceData");
 
     public static LeetAlgoContext CreateContext()
     {

@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Reflection;
+using System.Text;
 using LeetAlgo.Api.Controllers;
 using LeetAlgo.Api.Dtos;
 using LeetAlgo.Data;
@@ -95,11 +97,14 @@ public class SqlServerTests(SqlServerFixture fixture)
         DirectoryInfo folder = Directory.CreateTempSubdirectory("LeetAlgoExport_");
         try
         {
+            string configuration = typeof(SqlServerTests).Assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
             ProcessStartInfo command = new("dotnet")
             {
+                WorkingDirectory = TestDatabase.ToolsProjectDirectory,
                 UseShellExecute = false,
                 RedirectStandardError = true,
-                ArgumentList = { typeof(SourceDataFolder).Assembly.Location, "export", folder.FullName },
+                StandardErrorEncoding = Encoding.UTF8,
+                ArgumentList = { "run", "--no-build", "--configuration", configuration, "--", "export", folder.FullName },
             };
             command.Environment["ConnectionStrings__LeetAlgo"] = context.Database.GetConnectionString();
             using Process first = Process.Start(command)!;
