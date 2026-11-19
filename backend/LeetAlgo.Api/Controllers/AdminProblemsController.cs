@@ -130,12 +130,18 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProblem(int id)
+    public async Task<IActionResult> DeleteProblem(int id, [FromQuery] Guid? revision)
     {
         Problem? problem = await context.Problems.FindAsync(id);
         if (problem == null)
         {
             return NotFound($"找不到第 {id} 題。");
+        }
+
+        const string conflict = "題目已變更或清單缺少版本。請重新整理清單，再確認是否刪除。";
+        if (revision != problem.Revision)
+        {
+            return Conflict(conflict);
         }
 
         context.Problems.Remove(problem);
@@ -146,7 +152,7 @@ public class AdminProblemsController(LeetAlgoContext context) : ControllerBase
         }
         catch (DbUpdateConcurrencyException)
         {
-            return Conflict("題目已變更，請重新載入清單後再確認刪除。");
+            return Conflict(conflict);
         }
 
         return NoContent();

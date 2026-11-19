@@ -228,7 +228,8 @@ public class SqlServerTests(SqlServerFixture fixture)
         context.SaveChanges();
         context.ChangeTracker.Clear();
 
-        await new AdminProblemsController(context).DeleteProblem(ProblemId);
+        Guid revision = context.Problems.Single().Revision;
+        await new AdminProblemsController(context).DeleteProblem(ProblemId, revision);
 
         Assert.Empty(context.Problems);
         Assert.Empty(context.Solutions);

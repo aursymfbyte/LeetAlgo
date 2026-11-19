@@ -1,7 +1,26 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { searchProblems, SearchResult } from "./api";
+import { deleteProblem, saveAnimationMessage, searchProblems, SearchResult } from "./api";
 
 afterEach(() => vi.unstubAllGlobals());
+
+test("後台顯示 API 回傳的欄位錯誤", async () => {
+  const response = Response.json({ errors: { Text: ["動畫說明最多 300 個字。"] } }, {
+    status: 400, headers: { "Content-Type": "application/problem+json" },
+  });
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response));
+  await expect(saveAnimationMessage(1, { version: "brute", step: 0, text: "字".repeat(301) }))
+    .rejects.toThrow("動畫說明最多 300 個字。");
+});
+
+test("刪除只送出清單當時看到的版本，遇到衝突不自動重試", async () => {
+  const fetch = vi.fn().mockResolvedValue(new Response("題目已變更", { status: 409 }));
+  vi.stubGlobal("fetch", fetch);
+  await expect(deleteProblem(1, "舊版本")).rejects.toThrow("題目已變更");
+  expect(fetch).toHaveBeenCalledTimes(1);
+  const [url, options] = fetch.mock.calls[0];
+  expect(decodeURIComponent(url)).toMatch(/\/api\/admin\/problems\/1\?revision=舊版本$/);
+  expect(options.method).toBe("DELETE");
+});
 
 test("伺服器錯誤顯示後端提供的查詢編號", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, {

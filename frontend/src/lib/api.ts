@@ -11,6 +11,7 @@ export type ProblemSummary = {
   stage: string;
   complexity: string;
   readableLanguages: string[];
+  revision: string;
 };
 
 export type ProblemDetail = {
@@ -214,6 +215,13 @@ async function sendAdminRequest(method: string, path: string, body?: ProblemEdit
   }
   if (!response.ok) {
     const contentType = response.headers.get("Content-Type") ?? "";
+    if (response.status === 400 && contentType.startsWith("application/problem+json")) {
+      const problem = await response.json();
+      const messages = Object.values<string[]>(problem.errors ?? {}).flat();
+      if (messages.length > 0) {
+        throw new Error(messages.join(" "));
+      }
+    }
     if (contentType.startsWith("text/plain")) {
       const message = await response.text();
       throw new Error(message);
@@ -237,8 +245,11 @@ export async function updateProblem(problem: ProblemEdit) {
   await sendAdminRequest("PUT", `/api/admin/problems/${problem.id}`, problem);
 }
 
-export async function deleteProblem(id: number) {
-  await sendAdminRequest("DELETE", `/api/admin/problems/${id}`);
+export async function deleteProblem(id: number, revision: string) {
+  if (!revision) {
+    throw new Error("清單缺少版本。請重新整理後再確認刪除。");
+  }
+  await sendAdminRequest("DELETE", `/api/admin/problems/${id}?revision=${encodeURIComponent(revision)}`);
 }
 
 export async function updateTerms(terms: Terms) {

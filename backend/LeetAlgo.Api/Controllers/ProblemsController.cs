@@ -27,7 +27,8 @@ public class ProblemsController(LeetAlgoContext context) : ControllerBase
                     .Where(solution => solution.Version == Solution.Readable)
                     .OrderBy(solution => solution.Id)
                     .Select(solution => solution.Language)
-                    .ToList()))
+                    .ToList(),
+                problem.Revision))
             .ToListAsync();
     }
 

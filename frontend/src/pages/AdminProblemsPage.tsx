@@ -25,7 +25,7 @@ export default function AdminProblemsPage() {
 
     setError("");
     try {
-      await deleteProblem(problem.id);
+      await deleteProblem(problem.id, problem.revision);
     } catch (deleteError) {
       setError((deleteError as Error).message);
       return;

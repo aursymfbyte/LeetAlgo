@@ -16,7 +16,7 @@ GitHub Actions（推送到 main 時依變更執行）
 
 本機執行
 Docker Compose   Nginx（8081）──提供前端──▶ 瀏覽器 ──▶ API（8090）──▶ SQL Server
-Kubernetes（kind） 瀏覽器 ──▶ Nginx（18081）──/api──▶ API（2 個副本）──▶ SQL Server
+Kubernetes（kind） 瀏覽器 ──▶ Nginx（18081）──/api──▶ API ──▶ SQL Server
 ```
 
 ## 專案目錄
@@ -245,7 +245,7 @@ pwsh -File ./k8s/start.ps1
 | GET | `/api/admin/problems/{id}` |
 | POST | `/api/admin/problems` |
 | PUT | `/api/admin/problems/{id}` |
-| DELETE | `/api/admin/problems/{id}` |
+| DELETE | `/api/admin/problems/{id}?revision={清單上的版本}` |
 | POST | `/api/visits` |
 | GET | `/api/visits` |
 | DELETE | `/api/visits` |
@@ -269,7 +269,7 @@ pwsh -File ./k8s/start.ps1
 | 前端（Vitest、Testing Library） | 在 `frontend/` 執行 `npm test` |
 | 後端（xUnit、Testcontainers） | 啟動 Docker，在專案根目錄執行 `dotnet test backend/LeetAlgo.Tests` |
 
-推送到 `main` 時，GitHub Actions 會依前端或後端的變更執行測試，通過後部署。也可以在 Actions 頁面手動執行。
+推送到 `main` 時，GitHub Actions 會依前端或後端的變更執行測試，也可以在 Actions 頁面手動執行最新的 `main` 版本。
 
 ## 監控與快取
 

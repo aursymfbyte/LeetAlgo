@@ -8,6 +8,10 @@ on:
       - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -21,8 +25,25 @@ jobs:
       - name: Test
         run: dotnet test backend/LeetAlgo.Tests/LeetAlgo.Tests.csproj
 
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+        working-directory: frontend
+
+      - name: Check animations against the problem bank
+        run: npm test -- src/lib/animations/animations.test.ts
+        working-directory: frontend
+
   deploy:
     needs: test
+    if: github.ref == 'refs/heads/main'
+    concurrency:
+      group: backend-production
+      queue: max
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -34,7 +55,19 @@ jobs:
       - name: Publish
         run: dotnet publish backend/LeetAlgo.Api/LeetAlgo.Api.csproj --configuration Release --output ./publish --runtime win-x86
 
+      - name: Check for a newer backend release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $latest = gh run list --repo $env:GITHUB_REPOSITORY --workflow deploy-backend.yml --branch main --limit 1 --json databaseId --jq '.[0].databaseId'
+          if ($LASTEXITCODE -ne 0 -or !$latest) { throw '無法確認最新的後端工作。' }
+          $current = $latest -eq $env:GITHUB_RUN_ID
+          "current=$current" >> $env:GITHUB_OUTPUT
+          if (!$current) { Write-Output '已有較新的後端工作，略過部署。' }
+
       - name: Deploy
+        if: steps.release.outputs.current == 'true'
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
           website-name: ${{ secrets.WEBSITE_NAME }}

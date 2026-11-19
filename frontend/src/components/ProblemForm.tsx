@@ -6,6 +6,7 @@ import MarkdownEditor from "./MarkdownEditor";
 
 const DIFFICULTIES = ["簡單", "中等", "困難"];
 const TITLE_MAX_LENGTH = 200;
+const TITLE_PATTERN = String.raw`(?!.*[. ]$)[^<>:"\/\\\|?*\x00-\x1f]+`;
 const LINK_MAX_LENGTH = 300;
 const COMPLEXITY_MAX_LENGTH = 300;
 
@@ -86,10 +87,13 @@ export default function ProblemForm({ initial, isNew, stages, saving, error, onS
             <input
               value={problem.title}
               maxLength={TITLE_MAX_LENGTH}
+              pattern={TITLE_PATTERN}
+              title={'題名不能含有 < > : " / \\ | ? * 或控制字元，也不能以空格或半形句點結尾。'}
               required
               onChange={(event) => update({ title: event.target.value })}
             />
             <LengthCount value={problem.title} maxLength={TITLE_MAX_LENGTH} />
+            <span className="form-hint">題名也會用於匯出資料夾，例如問句請用全形「？」。</span>
           </label>
         </div>
         <div className="form-row">
