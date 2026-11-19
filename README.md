@@ -66,6 +66,7 @@ frontend/
 │  │  ├─ catalog.tsx
 │  │  ├─ complexity.ts
 │  │  ├─ languages.ts
+│  │  ├─ storage.ts
 │  │  ├─ useDocumentTitle.ts
 │  │  └─ visitor.ts
 │  ├─ pages/
@@ -151,6 +152,8 @@ backend/
 │  │  ├─ 20261118022305_AddProblemRevision.Designer.cs
 │  │  ├─ 20261118080041_AddCatalogVersion.cs
 │  │  ├─ 20261118080041_AddCatalogVersion.Designer.cs
+│  │  ├─ 20261119075222_AddContentRevisions.cs
+│  │  ├─ 20261119075222_AddContentRevisions.Designer.cs
 │  │  └─ LeetAlgoContextModelSnapshot.cs
 │  ├─ Models/
 │  │  ├─ Admin.cs
@@ -211,7 +214,7 @@ backend/
 docker compose up --build
 ```
 
-啟動時會套用 migration 並匯入題庫，已有題目就略過匯入。啟動後可開啟[本機網站](http://localhost:8081/) 或 [API](http://localhost:8090/)。
+啟動時會套用 migration，首次初始化時匯入題庫。啟動後可開啟[本機網站](http://localhost:8081/) 或 [API](http://localhost:8090/)。
 
 - 建立後台帳號用 `docker compose run --rm -it tools create-admin <帳號>`。
 - 停止服務用 `docker compose down`。加上 `-v` 會一併刪除本機資料庫。
@@ -251,7 +254,7 @@ pwsh -File ./k8s/start.ps1
 | DELETE | `/api/visits` |
 | GET | `/api/animation-messages/{problemId}` |
 | PUT | `/api/animation-messages/{problemId}` |
-| DELETE | `/api/animation-messages/{problemId}?version={version}&step={step}` |
+| DELETE | `/api/animation-messages/{problemId}?version={version}&step={step}&revision={說明版本}` |
 | GET | `/` |
 | GET | `/health/live` |
 | GET | `/health/ready` |
@@ -260,7 +263,7 @@ pwsh -File ./k8s/start.ps1
 
 ## 題庫匯出與匯入
 
-後台修改會寫入資料庫。要保留目前的題庫，可用 `LeetAlgo.Tools` 的 `export <空資料夾>` 匯出題目、題解、名詞解釋和動畫說明。建立新資料庫時，可用 `import <資料夾>` 匯回。專案附的題庫放在 [SourceData](backend/LeetAlgo.Tools/SourceData/)。
+後台修改會寫入資料庫。要保留目前的題庫，可用 `LeetAlgo.Tools` 的 `export <空資料夾>` 匯出題目、題解、名詞解釋和動畫說明。題名太長時，匯出資料夾只用題號，完整題名保留在 `problems.json`。建立新資料庫時，可用 `import <資料夾>` 匯回。專案附的題庫放在 [SourceData](backend/LeetAlgo.Tools/SourceData/)。
 
 ## 測試與部署
 

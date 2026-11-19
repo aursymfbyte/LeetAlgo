@@ -26,7 +26,8 @@ export default function AdminEditPage() {
   const isNew = id === undefined;
   const { stages, reload } = useCatalog();
   const navigate = useNavigate();
-  const [problem, setProblem] = useState<ProblemEdit | null>(isNew ? createEmptyProblem(stages[0].code) : null);
+  const [loadedProblem, setProblem] = useState<ProblemEdit | null>(null);
+  const problem = isNew && stages.length > 0 ? createEmptyProblem(stages[0].code) : loadedProblem;
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedButUnlistedId, setSavedButUnlistedId] = useState<number | null>(null);
@@ -97,7 +98,8 @@ export default function AdminEditPage() {
       </nav>
       <h1 className="problem-title">{pageTitle}</h1>
 
-      {problem === null && error === "" && <p className="message">載入中…</p>}
+      {isNew && stages.length === 0 && <p className="message">目前沒有階段，請先匯入題庫，再新增題目。</p>}
+      {!isNew && problem === null && error === "" && <p className="message">載入中…</p>}
       {problem === null && error !== "" && <p className="form-error">{error}</p>}
 
       {savedButUnlistedId !== null && (

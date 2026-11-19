@@ -18,7 +18,8 @@ services:
       target: tools
     command: ["import", "/data"]
     environment:
-      ConnectionStrings__LeetAlgo: Server=db;Database=LeetAlgo;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True
+      ConnectionStrings__LeetAlgo: Server=db;Database=LeetAlgo;User Id=sa;TrustServerCertificate=True
+      Database__Password: ${DB_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
@@ -30,7 +31,8 @@ services:
     ports:
       - "8090:8080"
     environment:
-      ConnectionStrings__LeetAlgo: Server=db;Database=LeetAlgo;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=True
+      ConnectionStrings__LeetAlgo: Server=db;Database=LeetAlgo;User Id=sa;TrustServerCertificate=True
+      Database__Password: ${DB_PASSWORD}
       Jwt__Key: ${JWT_KEY}
       AllowedOrigins__0: http://localhost:8081
     depends_on:

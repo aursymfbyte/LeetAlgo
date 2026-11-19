@@ -12,7 +12,7 @@ IConfiguration configuration = new ConfigurationBuilder()
     .Build();
 
 DbContextOptions<LeetAlgoContext> options = new DbContextOptionsBuilder<LeetAlgoContext>()
-    .UseSqlServer(configuration.GetConnectionString("LeetAlgo"))
+    .UseSqlServer(LeetAlgoContext.ResolveConnectionString(configuration))
     .Options;
 
 using LeetAlgoContext context = new(options);
@@ -43,14 +43,14 @@ static void ImportProblems(LeetAlgoContext context, string sourceFolder)
 {
     context.Database.Migrate();
 
-    if (context.Problems.Any())
+    if (context.Stages.Any() || context.CatalogVersions.Any(version => version.Stamp != Guid.Empty))
     {
-        Console.WriteLine("資料庫已經有題目，不重新匯入。");
+        Console.WriteLine("題庫已初始化，不重新匯入。");
         return;
     }
 
-    new SourceDataFolder(sourceFolder).ImportTo(context);
-    PrintCounts(context);
+    var counts = new SourceDataFolder(sourceFolder).ImportTo(context);
+    PrintCounts(counts);
 }
 
 static int ExportProblems(LeetAlgoContext context, string targetFolder)
@@ -61,19 +61,19 @@ static int ExportProblems(LeetAlgoContext context, string targetFolder)
         return 1;
     }
 
-    new SourceDataFolder(targetFolder).ExportFrom(context);
-    PrintCounts(context);
+    var counts = new SourceDataFolder(targetFolder).ExportFrom(context);
+    PrintCounts(counts);
     Console.WriteLine($"已匯出到：{Path.GetFullPath(targetFolder)}");
     return 0;
 }
 
-static void PrintCounts(LeetAlgoContext context)
+static void PrintCounts(SourceDataCounts counts)
 {
-    Console.WriteLine($"階段：{context.Stages.Count()}");
-    Console.WriteLine($"題目：{context.Problems.Count()}");
-    Console.WriteLine($"題解：{context.Solutions.Count()}");
-    Console.WriteLine($"兩版比較：{context.Comparisons.Count()}");
-    Console.WriteLine($"動畫說明：{context.AnimationMessages.Count()}");
+    Console.WriteLine($"階段：{counts.Stages}");
+    Console.WriteLine($"題目：{counts.Problems}");
+    Console.WriteLine($"題解：{counts.Solutions}");
+    Console.WriteLine($"兩版比較：{counts.Comparisons}");
+    Console.WriteLine($"動畫說明：{counts.AnimationMessages}");
 }
 
 static void CreateAdmin(LeetAlgoContext context, string userName)

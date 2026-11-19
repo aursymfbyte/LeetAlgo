@@ -1,3 +1,5 @@
+using System.Data;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -33,32 +35,50 @@ public class SourceDataFolder(string sourceFolder)
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    public void ImportTo(LeetAlgoContext context)
+    public SourceDataCounts ImportTo(LeetAlgoContext context)
     {
         ProblemList problemList = ReadJson<ProblemList>(ProblemListFile);
         Dictionary<string, Stage> stages = CreateStages(problemList.Stages);
 
+        List<Problem> problems = CreateProblems(problemList, stages);
+        List<AnimationMessage> messages = CreateAnimationMessages();
         context.Stages.AddRange(stages.Values);
-        context.Problems.AddRange(CreateProblems(problemList, stages));
-        context.AnimationMessages.AddRange(CreateAnimationMessages());
+        context.Problems.AddRange(problems);
+        context.AnimationMessages.AddRange(messages);
         context.Terms.Single().Content = ReadText(Path.Combine(sourceFolder, TermsFile));
         context.AdvanceCatalogVersion();
         context.SaveChanges();
+        return Counts(stages.Count, problems, messages.Count);
     }
 
-    public void ExportFrom(LeetAlgoContext context)
+    public SourceDataCounts ExportFrom(LeetAlgoContext context)
     {
-        List<StageEntry> stages = context.Stages
-            .OrderBy(stage => stage.SortOrder)
-            .Select(stage => new StageEntry(stage.Code, stage.Name))
-            .ToList();
-        List<Problem> problems = context.Problems
-            .Include(problem => problem.Stage)
-            .Include(problem => problem.Solutions)
-            .Include(problem => problem.Comparison)
-            .OrderBy(problem => problem.Stage.SortOrder)
-            .ThenBy(problem => problem.Id)
-            .ToList();
+        List<StageEntry> stages;
+        List<Problem> problems;
+        List<AnimationMessageEntry> messages;
+        string terms;
+        using (var transaction = context.Database.IsRelational() ? context.Database.BeginTransaction(IsolationLevel.Serializable) : null)
+        {
+            stages = context.Stages
+                .OrderBy(stage => stage.SortOrder)
+                .Select(stage => new StageEntry(stage.Code, stage.Name))
+                .ToList();
+            problems = context.Problems.AsNoTracking()
+                .Include(problem => problem.Stage)
+                .Include(problem => problem.Solutions)
+                .Include(problem => problem.Comparison)
+                .OrderBy(problem => problem.Stage.SortOrder)
+                .ThenBy(problem => problem.Id)
+                .ToList();
+            messages = context.AnimationMessages
+                .OrderBy(message => message.ProblemId)
+                .ThenBy(message => message.Version)
+                .ThenBy(message => message.Step)
+                .Select(message => new AnimationMessageEntry(message.ProblemId, message.Version, message.Step, message.Text))
+                .ToList();
+            terms = context.Terms.Select(row => row.Content).Single();
+            transaction?.Commit();
+        }
 
         List<ProblemEntry> entries = [];
         foreach (Problem problem in problems)
@@ -69,23 +89,36 @@ public class SourceDataFolder(string sourceFolder)
             entries.Add(entry);
         }
 
-        List<AnimationMessageEntry> messages = context.AnimationMessages
-            .OrderBy(message => message.ProblemId)
-            .ThenBy(message => message.Version)
-            .ThenBy(message => message.Step)
-            .Select(message => new AnimationMessageEntry(message.ProblemId, message.Version, message.Step, message.Text))
-            .ToList();
-
         WriteJson(ProblemListFile, new ProblemList(stages, entries));
         WriteJson(AnimationMessagesFile, messages);
-        WriteText(Path.Combine(sourceFolder, TermsFile), context.Terms.Single().Content);
+        WriteText(Path.Combine(sourceFolder, TermsFile), terms);
+        return Counts(stages.Count, problems, messages.Count);
     }
 
-    private string ProblemFolder(StageEntry stage, ProblemEntry problem)
+    private static SourceDataCounts Counts(int stages, List<Problem> problems, int messages)
+    {
+        return new SourceDataCounts(stages, problems.Count, problems.Sum(problem => problem.Solutions.Count),
+            problems.Count(problem => problem.Comparison != null), messages);
+    }
+
+    private string ProblemFolder(StageEntry stage, ProblemEntry problem, bool importing = false)
     {
         string stageFolder = $"{stage.Code.Replace(" ", "")}-{stage.Name.Replace("、", "")}";
-        string problemFolder = $"{problem.Id:D4}-{problem.Title}";
-        return Path.Combine(sourceFolder, "solutions", stageFolder, problemFolder);
+        string stagePath = Path.Combine(sourceFolder, "solutions", stageFolder);
+        string number = problem.Id.ToString("D4");
+        string name = $"{number}-{problem.Title}";
+        string namedFolder = Path.Combine(stagePath, name);
+        if (Encoding.UTF8.GetByteCount(name) <= 255)
+        {
+            return namedFolder;
+        }
+
+        string numberedFolder = Path.Combine(stagePath, number);
+        if (importing && !Directory.Exists(numberedFolder) && Directory.Exists(namedFolder))
+        {
+            return namedFolder;
+        }
+        return numberedFolder;
     }
 
     private static Dictionary<string, Stage> CreateStages(List<StageEntry> entries)
@@ -105,7 +138,7 @@ public class SourceDataFolder(string sourceFolder)
         foreach (ProblemEntry entry in problemList.Problems)
         {
             StageEntry stageEntry = problemList.Stages.First(stage => stage.Code == entry.Stage);
-            string folder = ProblemFolder(stageEntry, entry);
+            string folder = ProblemFolder(stageEntry, entry, importing: true);
             problems.Add(CreateProblem(entry, stages[entry.Stage], folder));
         }
         return problems;
@@ -247,7 +280,8 @@ public class SourceDataFolder(string sourceFolder)
 
     private static string ReadText(string path)
     {
-        return File.ReadAllText(path).Replace("\r\n", "\n").Trim();
+        string text = File.ReadAllText(path).Replace("\r\n", "\n");
+        return text.EndsWith('\n') ? text[..^1] : text;
     }
 
     private static void WriteText(string path, string text)

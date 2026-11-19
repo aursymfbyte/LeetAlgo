@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { readStoredValue, writeStoredValue } from "../lib/storage";
 import { complexityOf, shortComplexity } from "../lib/complexity";
 import { highlightCode, languages } from "../lib/languages";
 
@@ -18,24 +19,24 @@ type CodeViewerProps = {
 };
 
 export default function CodeViewer({ codes, twoVersions }: CodeViewerProps) {
-  const [languageKey, setLanguageKey] = useState(localStorage.getItem("codeLanguage") ?? "cs");
-  const [version, setVersion] = useState((localStorage.getItem("codeVersion") ?? "optimal") as Version);
+  const [languageKey, setLanguageKey] = useState(() => readStoredValue("codeLanguage") ?? "cs");
+  const [version, setVersion] = useState<Version>(() => readStoredValue("codeVersion") === "readable" ? "readable" : "optimal");
   const [copyText, setCopyText] = useState("複製");
 
   const activeVersion = twoVersions ? version : "optimal";
-  const language = languages.find((item) => item.key === languageKey)!;
+  const language = languages.find((item) => item.key === languageKey) ?? languages[0];
   const code = codes[activeVersion][language.key];
   const versionLabel = twoVersions ? `${VERSION_NAMES[activeVersion]} · ` : "";
   const complexity = shortComplexity(complexityOf(code, language.comment));
 
   function chooseLanguage(key: string) {
     setLanguageKey(key);
-    localStorage.setItem("codeLanguage", key);
+    writeStoredValue("codeLanguage", key);
   }
 
   function chooseVersion(newVersion: Version) {
     setVersion(newVersion);
-    localStorage.setItem("codeVersion", newVersion);
+    writeStoredValue("codeVersion", newVersion);
   }
 
   async function copyCode() {

@@ -8,15 +8,17 @@ type Version = "brute" | "efficient";
 type PlayerProps = {
   frames: Frame[];
   edits: AnimationMessage[];
-  onSave: (step: number, text: string) => Promise<void>;
-  onRestore: (step: number) => Promise<void>;
+  canEdit: boolean;
+  onSave: (step: number, text: string, revision?: string) => Promise<void>;
+  onRestore: (step: number, revision: string) => Promise<void>;
 };
 
 type ViewerProps = {
   animations: ProblemAnimation;
   edits: AnimationMessage[];
   onSave: (message: AnimationMessage) => Promise<void>;
-  onRestore: (version: string, step: number) => Promise<void>;
+  canEdit: boolean;
+  onRestore: (version: string, step: number, revision: string) => Promise<void>;
 };
 
 const VERSIONS: Version[] = ["brute", "efficient"];
@@ -147,11 +149,13 @@ function RowView({ row }: { row: Row }) {
   );
 }
 
-function Player({ frames, edits, onSave, onRestore }: PlayerProps) {
+function Player({ frames, edits, canEdit, onSave, onRestore }: PlayerProps) {
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
+  const [draftRevision, setDraftRevision] = useState<string>();
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const lastStep = frames.length - 1;
@@ -185,6 +189,7 @@ function Player({ frames, edits, onSave, onRestore }: PlayerProps) {
   function startEditing() {
     setPlaying(false);
     setDraft(message);
+    setDraftRevision(edit?.revision);
     setError("");
     setEditing(true);
   }
@@ -192,21 +197,28 @@ function Player({ frames, edits, onSave, onRestore }: PlayerProps) {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError("");
+    setSaving(true);
     try {
-      await onSave(step, draft);
+      await onSave(step, draft, draftRevision);
       setEditing(false);
     } catch (saveError) {
       setError((saveError as Error).message);
+    } finally {
+      setSaving(false);
     }
   }
 
   async function restore() {
+    if (!draftRevision) return;
     setError("");
+    setSaving(true);
     try {
-      await onRestore(step);
+      await onRestore(step, draftRevision);
       setEditing(false);
     } catch (restoreError) {
       setError((restoreError as Error).message);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -228,10 +240,10 @@ function Player({ frames, edits, onSave, onRestore }: PlayerProps) {
           />
           {error !== "" && <p className="form-error">{error}</p>}
           <div className="form-actions">
-            <button type="submit" className="primary-button">儲存</button>
-            <button type="button" className="secondary-button" onClick={() => setEditing(false)}>取消</button>
-            {edit !== undefined && (
-              <button type="button" className="secondary-button" onClick={restore}>還原成原本的說明</button>
+            <button type="submit" className="primary-button" disabled={saving}>儲存</button>
+            <button type="button" className="secondary-button" disabled={saving} onClick={() => setEditing(false)}>取消</button>
+            {draftRevision && (
+              <button type="button" className="secondary-button" disabled={saving} onClick={restore}>還原成原本的說明</button>
             )}
           </div>
         </form>
@@ -248,7 +260,7 @@ function Player({ frames, edits, onSave, onRestore }: PlayerProps) {
           下一步
         </button>
         <span className="step-count">第 {step + 1} / {frames.length} 步</span>
-        {isAdmin && !editing && (
+        {isAdmin && canEdit && !editing && (
           <button type="button" className="link-button" onClick={startEditing}>{editText}</button>
         )}
       </div>
@@ -256,7 +268,7 @@ function Player({ frames, edits, onSave, onRestore }: PlayerProps) {
   );
 }
 
-export default function AnimationViewer({ animations, edits, onSave, onRestore }: ViewerProps) {
+export default function AnimationViewer({ animations, edits, canEdit, onSave, onRestore }: ViewerProps) {
   const [version, setVersion] = useState<Version>("brute");
   const versionEdits = edits.filter((item) => item.version === version);
 
@@ -278,8 +290,9 @@ export default function AnimationViewer({ animations, edits, onSave, onRestore }
         key={version}
         frames={animations[version]}
         edits={versionEdits}
-        onSave={(step, text) => onSave({ version, step, text })}
-        onRestore={(step) => onRestore(version, step)}
+        canEdit={canEdit}
+        onSave={(step, text, revision) => onSave({ version, step, text, revision })}
+        onRestore={(step, revision) => onRestore(version, step, revision)}
       />
     </>
   );

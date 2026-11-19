@@ -7,9 +7,9 @@ import { getToken } from "./lib/auth";
 import { getVisitorId } from "./lib/visitor";
 import "./styles.css";
 
-const isAdmin = getToken() !== null;
-if (!isAdmin) {
-  recordVisit(getVisitorId());
+if (getToken() === null) {
+  const visitorId = getVisitorId();
+  if (visitorId !== null) void recordVisit(visitorId);
 }
 
 createRoot(document.getElementById("root")!).render(

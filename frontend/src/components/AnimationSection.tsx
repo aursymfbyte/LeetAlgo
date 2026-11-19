@@ -6,32 +6,34 @@ import AnimationViewer from "./AnimationViewer";
 export default function AnimationSection({ problemId }: { problemId: number }) {
   const animations = problemAnimations.find((item) => item.problemId === problemId);
   const [edits, setEdits] = useState<AnimationMessage[]>([]);
+  const [canEdit, setCanEdit] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
-    setEdits([]);
-    getAnimationMessages(problemId).then((result) => {
-      if (!cancelled) {
-        setEdits(result);
-      }
-    });
+    if (!animations) return;
+    getAnimationMessages(problemId)
+      .then((result) => {
+        if (cancelled) return;
+        setEdits(result.messages);
+        setCanEdit(result.canEdit);
+      })
+      .catch((error: Error) => {
+        if (!cancelled) setLoadError(error.message);
+      });
     return () => {
       cancelled = true;
     };
-  }, [problemId]);
-
-  function withoutEdit(version: string, step: number) {
-    return edits.filter((item) => item.version !== version || item.step !== step);
-  }
+  }, [problemId, animations]);
 
   async function saveEdit(message: AnimationMessage) {
-    await saveAnimationMessage(problemId, message);
-    setEdits([...withoutEdit(message.version, message.step), message]);
+    const saved = await saveAnimationMessage(problemId, message);
+    setEdits((current) => [...current.filter((item) => item.version !== saved.version || item.step !== saved.step), saved]);
   }
 
-  async function restoreOriginal(version: string, step: number) {
-    await deleteAnimationMessage(problemId, version, step);
-    setEdits(withoutEdit(version, step));
+  async function restoreOriginal(version: string, step: number, revision: string) {
+    await deleteAnimationMessage(problemId, version, step, revision);
+    setEdits((current) => current.filter((item) => item.version !== version || item.step !== step));
   }
 
   if (animations === undefined) {
@@ -41,8 +43,9 @@ export default function AnimationSection({ problemId }: { problemId: number }) {
   return (
     <section className="solutions">
       <h2>動畫示範</h2>
+      {loadError && <p className="message">目前顯示內建動畫說明。{loadError}</p>}
       <AnimationViewer
-        key={problemId}
+        canEdit={canEdit}
         animations={animations}
         edits={edits}
         onSave={saveEdit}

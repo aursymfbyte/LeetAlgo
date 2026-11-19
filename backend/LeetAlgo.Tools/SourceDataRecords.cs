@@ -17,3 +17,5 @@ public record ProblemList(List<StageEntry> Stages, List<ProblemEntry> Problems);
 public record AnimationMessageEntry(int ProblemId, string Version, int Step, string Text);
 
 public record Statement(string Difficulty, string Link, string Body);
+
+public record SourceDataCounts(int Stages, int Problems, int Solutions, int Comparisons, int AnimationMessages);

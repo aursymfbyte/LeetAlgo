@@ -1,22 +1,26 @@
+import { readStoredValue, writeStoredValue } from "./storage";
+
 const TOKEN_KEY = "adminToken";
 const USER_KEY = "adminUser";
 
 export function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
+  return readStoredValue(TOKEN_KEY);
 }
 
 export function getUserName() {
-  return localStorage.getItem(USER_KEY);
+  return readStoredValue(USER_KEY);
 }
 
 export function saveLogin(token: string, userName: string) {
-  localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(USER_KEY, userName);
+  if (!writeStoredValue(USER_KEY, userName) || !writeStoredValue(TOKEN_KEY, token)) {
+    clearToken();
+    throw new Error("無法儲存登入狀態。請允許這個網站使用瀏覽器儲存空間後再登入。");
+  }
 }
 
 export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  writeStoredValue(TOKEN_KEY, null);
+  writeStoredValue(USER_KEY, null);
 }
 
 function readExpireTime(token: string): number | null {

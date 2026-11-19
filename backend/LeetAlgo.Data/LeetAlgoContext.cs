@@ -1,5 +1,7 @@
 using LeetAlgo.Data.Models;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace LeetAlgo.Data;
 
@@ -14,6 +16,15 @@ public class LeetAlgoContext(DbContextOptions<LeetAlgoContext> options) : DbCont
     public DbSet<Visit> Visits => Set<Visit>();
     public DbSet<Terms> Terms => Set<Terms>();
     public DbSet<AnimationMessage> AnimationMessages => Set<AnimationMessage>();
+
+    public static string? ResolveConnectionString(IConfiguration configuration)
+    {
+        string? connection = configuration.GetConnectionString("LeetAlgo");
+        string? password = configuration["Database:Password"];
+        if (password is null) return connection;
+
+        return new SqlConnectionStringBuilder(connection) { Password = password }.ConnectionString;
+    }
 
     public void AdvanceCatalogVersion()
     {
@@ -72,10 +83,13 @@ public class LeetAlgoContext(DbContextOptions<LeetAlgoContext> options) : DbCont
             table.HasIndex(visit => new { visit.Date, visit.VisitorId }).IsUnique();
         });
 
+        modelBuilder.Entity<Terms>().Property(terms => terms.Revision).IsRowVersion();
+
         modelBuilder.Entity<AnimationMessage>(table =>
         {
             table.Property(message => message.Version).HasMaxLength(10);
             table.Property(message => message.Text).HasMaxLength(300);
+            table.Property(message => message.Revision).IsRowVersion();
             table.HasIndex(message => new { message.ProblemId, message.Version, message.Step }).IsUnique();
         });
     }

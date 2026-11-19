@@ -12,13 +12,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.AddSiteOperations();
 builder.Services.AddDbContext<LeetAlgoContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("LeetAlgo")));
+    options.UseSqlServer(LeetAlgoContext.ResolveConnectionString(builder.Configuration)));
 
 string[] allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()!;
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy => policy
         .WithOrigins(allowedOrigins)
-        .WithExposedHeaders("X-Trace-Id")
+        .WithExposedHeaders("X-Trace-Id", "X-Animation-Revisions")
         .AllowAnyHeader()
         .AllowAnyMethod()));
 

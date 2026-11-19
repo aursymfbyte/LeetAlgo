@@ -69,9 +69,11 @@ export type SearchResponse = {
 
 export type Terms = {
   content: string;
+  revision?: string;
 };
 
 export type AnimationMessage = {
+  revision?: string;
   version: string;
   step: number;
   text: string;
@@ -157,8 +159,11 @@ export function getTerms() {
   return getJson<Terms>("/api/terms");
 }
 
-export function getAnimationMessages(problemId: number) {
-  return getJson<AnimationMessage[]>(`/api/animation-messages/${problemId}`);
+export async function getAnimationMessages(problemId: number) {
+  const response = await request(`/api/animation-messages/${problemId}`);
+  if (!response.ok) throw new Error("讀取自訂動畫說明失敗。");
+  const messages: AnimationMessage[] = await response.json();
+  return { messages, canEdit: response.headers.get("X-Animation-Revisions") === "1" };
 }
 
 export function hasTwoVersions(problem: ProblemSummary) {
@@ -253,6 +258,7 @@ export async function deleteProblem(id: number, revision: string) {
 }
 
 export async function updateTerms(terms: Terms) {
+  if (!terms.revision) throw new Error("缺少名詞解釋版本。請保留草稿，重新載入後再確認。");
   await sendAdminRequest("PUT", "/api/terms", terms);
 }
 
@@ -266,9 +272,12 @@ export async function clearVisitStats() {
 }
 
 export async function saveAnimationMessage(problemId: number, message: AnimationMessage) {
-  await sendAdminRequest("PUT", `/api/animation-messages/${problemId}`, message);
+  const response = await sendAdminRequest("PUT", `/api/animation-messages/${problemId}`, message);
+  const saved: AnimationMessage = await response.json();
+  return saved;
 }
 
-export async function deleteAnimationMessage(problemId: number, version: string, step: number) {
-  await sendAdminRequest("DELETE", `/api/animation-messages/${problemId}?version=${version}&step=${step}`);
+export async function deleteAnimationMessage(problemId: number, version: string, step: number, revision: string) {
+  const query = new URLSearchParams({ version, step: String(step), revision });
+  await sendAdminRequest("DELETE", `/api/animation-messages/${problemId}?${query}`);
 }

@@ -8,4 +8,5 @@ public class AnimationMessage
     public required string Version { get; set; }
     public int Step { get; set; }
     public required string Text { get; set; }
+    public byte[] Revision { get; set; } = [];
 }

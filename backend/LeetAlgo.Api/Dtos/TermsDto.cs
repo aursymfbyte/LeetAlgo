@@ -1,3 +1,3 @@
 namespace LeetAlgo.Api.Dtos;
 
-public record TermsDto(string Content);
+public record TermsDto(string Content, byte[]? Revision = null);

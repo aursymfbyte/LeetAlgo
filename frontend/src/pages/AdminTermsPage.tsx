@@ -1,13 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MarkdownEditor from "../components/MarkdownEditor";
-import { getTerms, updateTerms } from "../lib/api";
+import { getTerms, Terms, updateTerms } from "../lib/api";
 import { useDocumentTitle } from "../lib/useDocumentTitle";
 
 export default function AdminTermsPage() {
   const navigate = useNavigate();
-  const [content, setContent] = useState("");
-  const [loaded, setLoaded] = useState(false);
+  const [terms, setTerms] = useState<Terms | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -15,19 +14,17 @@ export default function AdminTermsPage() {
 
   useEffect(() => {
     getTerms()
-      .then((terms) => {
-        setContent(terms.content);
-        setLoaded(true);
-      })
+      .then(setTerms)
       .catch((loadError) => setError(loadError.message));
   }, []);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (!terms) return;
     setSaving(true);
     setError("");
     try {
-      await updateTerms({ content });
+      await updateTerms(terms);
       navigate("/terms");
     } catch (saveError) {
       setError((saveError as Error).message);
@@ -46,18 +43,18 @@ export default function AdminTermsPage() {
       </nav>
       <h1 className="problem-title">編輯名詞解釋</h1>
 
-      {!loaded && error === "" && <p className="message">載入中…</p>}
-      {!loaded && error !== "" && <p className="form-error">{error}</p>}
+      {terms === null && error === "" && <p className="message">載入中…</p>}
+      {terms === null && error !== "" && <p className="form-error">{error}</p>}
 
-      {loaded && (
+      {terms && (
         <form className="admin-form" onSubmit={handleSubmit}>
           <fieldset>
             <legend>內容（Markdown）</legend>
             <MarkdownEditor
               rows={30}
-              value={content}
+              value={terms.content}
               previewClassName="text-card terms"
-              onChange={setContent}
+              onChange={(content) => setTerms({ ...terms, content })}
             />
           </fieldset>
 

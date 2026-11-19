@@ -147,7 +147,11 @@ public class SqlServerTests(SqlServerFixture fixture)
         ProblemDetailDto detail = (await new ProblemsController(context).GetProblem(ProblemId)).Value!;
         ProblemEditDto edit = (await new AdminProblemsController(context).GetProblem(ProblemId)).Value!;
         List<ComparisonDto> comparisons = await new ComparisonsController(context).GetComparisons();
-        List<AnimationMessageDto> messages = await new AnimationMessagesController(context).GetMessages(ProblemId);
+        var animations = new AnimationMessagesController(context)
+        {
+            ControllerContext = new ControllerContext { HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext() },
+        };
+        List<AnimationMessageDto> messages = await animations.GetMessages(ProblemId);
         TermsDto terms = await new TermsController(context).GetTerms();
         VisitStatsDto visits = await new VisitsController(context).GetVisits();
 
@@ -301,7 +305,7 @@ public class SqlServerTests(SqlServerFixture fixture)
         AnimationMessagesController controller = new(context);
 
         await controller.SaveMessage(ProblemId, new AnimationMessageDto("brute", 0, "改過的說明"));
-        await controller.DeleteMessage(ProblemId, "brute", 0);
+        await controller.DeleteMessage(ProblemId, "brute", 0, context.AnimationMessages.Single().Revision);
 
         Assert.Empty(context.AnimationMessages);
     }

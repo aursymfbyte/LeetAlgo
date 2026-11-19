@@ -39,11 +39,12 @@ function codesOf(detail: ProblemDetail) {
 export default function ProblemPage() {
   const catalog = useCatalogIfLoaded();
   const problemId = Number(useParams().id);
-  const [detail, setDetail] = useState<ProblemDetail | null>(null);
+  const [loadedDetail, setDetail] = useState<ProblemDetail | null>(null);
   const [error, setError] = useState("");
 
   const listed = catalog?.problems.find((item) => item.id === problemId);
-  const problem = listed ?? detail;
+  const detail = loadedDetail?.id === problemId ? loadedDetail : null;
+  const problem = detail ?? listed;
 
   useDocumentTitle(problem ? `${problem.id}. ${problem.title}` : "");
 
@@ -71,7 +72,7 @@ export default function ProblemPage() {
     return <p className="message">{error}</p>;
   }
 
-  if (problem === null) {
+  if (!problem) {
     return <p className="message">載入中…</p>;
   }
 
@@ -100,7 +101,7 @@ export default function ProblemPage() {
           <Markdown className="statement text-card" text={removeAdvancedSection(detail.statement)} />
 
           <Suspense fallback={null}>
-            <AnimationSection problemId={problem.id} />
+            <AnimationSection key={problem.id} problemId={problem.id} />
           </Suspense>
 
           <section className="solutions">

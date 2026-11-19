@@ -58,6 +58,12 @@ namespace LeetAlgo.Data.Migrations
                     b.Property<int>("ProblemId")
                         .HasColumnType("int");
 
+                    b.Property<byte[]>("Revision")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<int>("Step")
                         .HasColumnType("int");
 
@@ -241,6 +247,12 @@ namespace LeetAlgo.Data.Migrations
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("Revision")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.HasKey("Id");
 
