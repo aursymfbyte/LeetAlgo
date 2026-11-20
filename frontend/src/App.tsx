@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Outlet, Route, Routes, useLocation } from "react-router-dom";
 import RequireAdmin from "./components/RequireAdmin";
 import SiteHeader from "./components/SiteHeader";
 import { CatalogProvider, RequireCatalog } from "./lib/catalog";
@@ -24,23 +24,27 @@ export default function App() {
     <>
       <SiteHeader />
       <main className="wrap">
-        <CatalogProvider>
-          <Routes>
+        <Routes>
+          <Route element={<CatalogProvider><Outlet /></CatalogProvider>}>
             <Route path="/problem/:id" element={<ProblemPage />} />
-            <Route path="/compare" element={<ComparePage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/admin/login" element={<AdminLoginPage />} />
-            <Route path="/admin/terms" element={<RequireAdmin><AdminTermsPage /></RequireAdmin>} />
-            <Route path="/admin/visits" element={<RequireAdmin><AdminVisitsPage /></RequireAdmin>} />
             <Route element={<RequireCatalog />}>
               <Route path="/" element={<IndexPage />} />
-              <Route path="/admin" element={<RequireAdmin><AdminProblemsPage /></RequireAdmin>} />
-              <Route path="/admin/problems/new" element={<RequireAdmin><AdminEditPage key="new" /></RequireAdmin>} />
-              <Route path="/admin/problems/:id/edit" element={<RequireAdmin><AdminEditPage key="edit" /></RequireAdmin>} />
             </Route>
-            <Route path="*" element={<p className="message">找不到這個頁面。</p>} />
-          </Routes>
-        </CatalogProvider>
+          </Route>
+          <Route path="/compare" element={<ComparePage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/admin" element={<RequireAdmin><Outlet /></RequireAdmin>}>
+            <Route path="terms" element={<AdminTermsPage />} />
+            <Route path="visits" element={<AdminVisitsPage />} />
+            <Route element={<CatalogProvider><RequireCatalog /></CatalogProvider>}>
+              <Route index element={<AdminProblemsPage />} />
+              <Route path="problems/new" element={<AdminEditPage key="new" />} />
+              <Route path="problems/:id/edit" element={<AdminEditPage key="edit" />} />
+            </Route>
+          </Route>
+          <Route path="*" element={<p className="message">找不到這個頁面。</p>} />
+        </Routes>
       </main>
     </>
   );

@@ -5,6 +5,13 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
+if (args.Length != 2 || string.IsNullOrWhiteSpace(args[1]) ||
+    args[0] is not ("import" or "export" or "create-admin"))
+{
+    Console.Error.WriteLine("可用的指令：import <資料夾>、export <資料夾>、create-admin <帳號>");
+    return 1;
+}
+
 IConfiguration configuration = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json")
@@ -17,24 +24,16 @@ DbContextOptions<LeetAlgoContext> options = new DbContextOptionsBuilder<LeetAlgo
 
 using LeetAlgoContext context = new(options);
 
-string command = args[0];
-
-if (command == "import")
+switch (args[0])
 {
-    ImportProblems(context, args[1]);
-}
-else if (command == "export")
-{
-    return ExportProblems(context, args[1]);
-}
-else if (command == "create-admin")
-{
-    CreateAdmin(context, args[1]);
-}
-else
-{
-    Console.WriteLine($"不認識的指令：{command}");
-    Console.WriteLine("可用的指令：import <資料夾>、export <資料夾>、create-admin <帳號>");
+    case "import":
+        ImportProblems(context, args[1]);
+        break;
+    case "export":
+        return ExportProblems(context, args[1]);
+    case "create-admin":
+        CreateAdmin(context, args[1]);
+        break;
 }
 
 return 0;

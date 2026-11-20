@@ -5,18 +5,18 @@ import { useDocumentTitle } from "../lib/useDocumentTitle";
 
 export default function ComparePage() {
   const [comparisons, setComparisons] = useState<Comparison[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [error, setError] = useState("");
 
   useDocumentTitle("兩版比較");
 
   useEffect(() => {
     getComparisons()
       .then(setComparisons)
-      .catch(() => setFailed(true));
+      .catch((loadError: Error) => setError(loadError.message));
   }, []);
 
-  if (failed) {
-    return <p className="message">讀取比較資料失敗，請重新整理頁面。</p>;
+  if (error) {
+    return <p className="message">讀取比較資料失敗。{error}</p>;
   }
 
   if (comparisons === null) {

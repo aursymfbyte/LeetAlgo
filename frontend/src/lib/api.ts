@@ -91,34 +91,73 @@ export type VisitStats = {
 
 const API_URL: string = import.meta.env.VITE_API_URL;
 
+class RequestError extends Error {
+  constructor(message: string, readonly status?: number) {
+    super(message);
+  }
+}
+
 async function request(path: string, options?: RequestInit) {
   let response: Response;
   try {
     response = await fetch(API_URL + path, options);
-  } catch {
-    throw new Error("連不上伺服器，請稍後再試。");
+  } catch (error) {
+    if (options?.signal?.aborted) throw error;
+    throw new RequestError("連不上伺服器，請稍後再試。");
   }
   const traceId = response.headers.get("X-Trace-Id");
   if (response.status >= 500 && traceId) {
-    throw new Error(`伺服器暫時無法完成請求。查詢編號 ${traceId}`);
+    throw new RequestError(`伺服器暫時無法完成請求。查詢編號 ${traceId}`, response.status);
   }
   return response;
 }
 
-async function getJson<T>(path: string): Promise<T> {
-  const response = await request(path);
+async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const response = await request(path, { signal });
   if (!response.ok) {
-    throw new Error(`讀取失敗：${path}`);
+    throw new RequestError(`讀取失敗：${path}`, response.status);
   }
-  return response.json();
+  try {
+    return await response.json();
+  } catch (error) {
+    if (!(error instanceof TypeError) || signal?.aborted) throw error;
+    throw new RequestError("接收資料時連線中斷，請稍後再試。");
+  }
 }
 
-export function getStages() {
-  return getJson<Stage[]>("/api/stages");
+function waitForRetry(signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    signal.throwIfAborted();
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", cancel);
+      resolve();
+    }, 3000);
+    function cancel() {
+      clearTimeout(timer);
+      reject(signal.reason);
+    }
+    signal.addEventListener("abort", cancel, { once: true });
+  });
 }
 
-export function getProblems() {
-  return getJson<ProblemSummary[]>("/api/problems");
+async function getCatalogList<T>(path: string, signal: AbortSignal): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await getJson<T>(path, signal);
+    } catch (error) {
+      if (attempt === 3 || !(error instanceof RequestError)) throw error;
+      if (error.status !== undefined && ![408, 502, 503, 504].includes(error.status)) throw error;
+      await waitForRetry(signal);
+    }
+  }
+}
+
+export function getStages(signal: AbortSignal) {
+  return getCatalogList<Stage[]>("/api/stages", signal);
+}
+
+export function getProblems(signal: AbortSignal) {
+  return getCatalogList<ProblemSummary[]>("/api/problems", signal);
 }
 
 export async function getProblem(id: number): Promise<ProblemDetail> {

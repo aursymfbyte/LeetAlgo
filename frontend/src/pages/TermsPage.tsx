@@ -5,18 +5,18 @@ import { useDocumentTitle } from "../lib/useDocumentTitle";
 
 export default function TermsPage() {
   const [terms, setTerms] = useState<Terms | null>(null);
-  const [failed, setFailed] = useState(false);
+  const [error, setError] = useState("");
 
   useDocumentTitle("複雜度名詞解釋");
 
   useEffect(() => {
     getTerms()
       .then(setTerms)
-      .catch(() => setFailed(true));
+      .catch((loadError: Error) => setError(loadError.message));
   }, []);
 
-  if (failed) {
-    return <p className="message">讀取名詞解釋失敗，請重新整理頁面。</p>;
+  if (error) {
+    return <p className="message">讀取名詞解釋失敗。{error}</p>;
   }
 
   if (terms === null) {
