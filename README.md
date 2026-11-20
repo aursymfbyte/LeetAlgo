@@ -41,6 +41,7 @@ frontend/
 │  │  └─ SiteHeader.tsx
 │  ├─ lib/
 │  │  ├─ animations/
+│  │  │  ├─ arraysAndHashing/（stage0 的雜湊、前綴和與陣列操作）
 │  │  │  ├─ animations.test.ts
 │  │  │  ├─ index.ts
 │  │  │  ├─ stage0.ts
@@ -228,6 +229,18 @@ pwsh -File ./k8s/start.ps1
 ```
 
 腳本會建立或更新 `leetalgo-local` 叢集。終端機印出網址後即可開啟[本機網站](http://127.0.0.1:18081/)。建立後台帳號可加上 `-AdminName <帳號>`。刪除整個叢集會一併移除資料庫。
+
+### 部署前預演
+
+在 Docker Desktop 備妥上一版的 `leetalgo-web`、`leetalgo-api`、`leetalgo-tools` 映像，三者使用同一個版本標籤。可用 `docker image ls leetalgo-web` 查看先前執行 `start.ps1` 留下的標籤。在有 Chrome 或 Edge 的 Windows 電腦執行下列命令，將範例標籤換成要驗證的上一版。
+
+```powershell
+pwsh -File ./k8s/rehearse.ps1 -PreviousTag 1b4c562a275d
+```
+
+腳本另建暫時的 kind 叢集，從舊版工具映像匯入題庫、修改一題，再以工作副本的後端升級同一個資料庫。它會核對遷移紀錄與題庫資料，預演叢集會在結束時清理。
+
+若已建好這份工作副本的 API 和工具映像，可用 `-CandidateBackendTag <標籤>` 重用；加上 `-CandidateWebTag <標籤>` 可接著驗證新版前端映像。
 
 ## API 路由
 
