@@ -55,6 +55,9 @@ jobs:
       - name: Publish
         run: dotnet publish backend/LeetAlgo.Api/LeetAlgo.Api.csproj --configuration Release --output ./publish --runtime win-x86
 
+      - name: Build database migration tool
+        run: dotnet build backend/LeetAlgo.Tools/LeetAlgo.Tools.csproj --configuration Release
+
       - name: Check for a newer backend release
         id: release
         env:
@@ -65,6 +68,16 @@ jobs:
           $current = $latest -eq $env:GITHUB_RUN_ID
           "current=$current" >> $env:GITHUB_OUTPUT
           if (!$current) { Write-Output '已有較新的後端工作，略過部署。' }
+
+      - name: Migrate production database
+        if: steps.release.outputs.current == 'true'
+        env:
+          ConnectionStrings__LeetAlgo: ${{ secrets.PRODUCTION_DB_CONNECTION_STRING }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:ConnectionStrings__LeetAlgo)) {
+            throw '請在 GitHub Actions 設定 PRODUCTION_DB_CONNECTION_STRING。尚未執行遷移或部署。'
+          }
+          dotnet ./backend/LeetAlgo.Tools/bin/Release/net10.0/LeetAlgo.Tools.dll migrate
 
       - name: Deploy
         if: steps.release.outputs.current == 'true'

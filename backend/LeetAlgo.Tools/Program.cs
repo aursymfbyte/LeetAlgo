@@ -5,10 +5,15 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-if (args.Length != 2 || string.IsNullOrWhiteSpace(args[1]) ||
-    args[0] is not ("import" or "export" or "create-admin"))
+bool valid = args switch
 {
-    Console.Error.WriteLine("可用的指令：import <資料夾>、export <資料夾>、create-admin <帳號>");
+    ["migrate"] => true,
+    ["import" or "export" or "create-admin", var value] => !string.IsNullOrWhiteSpace(value),
+    _ => false,
+};
+if (!valid)
+{
+    Console.Error.WriteLine("可用的指令：migrate、import <資料夾>、export <資料夾>、create-admin <帳號>");
     return 1;
 }
 
@@ -26,6 +31,9 @@ using LeetAlgoContext context = new(options);
 
 switch (args[0])
 {
+    case "migrate":
+        context.Database.Migrate();
+        break;
     case "import":
         ImportProblems(context, args[1]);
         break;

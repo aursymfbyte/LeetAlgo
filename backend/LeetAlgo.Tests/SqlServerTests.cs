@@ -27,7 +27,7 @@ public class SqlServerFixture : IAsyncLifetime
         return container.DisposeAsync().AsTask();
     }
 
-    public LeetAlgoContext CreateMigratedContext()
+    public LeetAlgoContext CreateContext()
     {
         SqlConnectionStringBuilder connection = new(container.GetConnectionString())
         {
@@ -37,7 +37,12 @@ public class SqlServerFixture : IAsyncLifetime
             .UseSqlServer(connection.ConnectionString)
             .Options;
 
-        LeetAlgoContext context = new(options);
+        return new LeetAlgoContext(options);
+    }
+
+    public LeetAlgoContext CreateMigratedContext()
+    {
+        LeetAlgoContext context = CreateContext();
         context.Database.Migrate();
         return context;
     }
@@ -63,6 +68,31 @@ public class SqlServerTests(SqlServerFixture fixture)
         Assert.Empty(context.Database.GetPendingMigrations());
         Assert.False(context.Database.HasPendingModelChanges());
         Assert.Single(context.Terms);
+    }
+
+    [Fact]
+    public async Task MigrateCommand_AppliesSchemaWithoutImportingAndPreservesEditsOnRerun()
+    {
+        using LeetAlgoContext context = fixture.CreateContext();
+        var first = await RunTool(context, "migrate");
+        Assert.True(first.ExitCode == 0, first.Error);
+        Assert.Empty(context.Database.GetPendingMigrations());
+        Assert.Empty(context.Stages);
+        Assert.Empty(context.Problems);
+
+        Stage stage = new() { Code = "階段 0", Name = "陣列", SortOrder = 0 };
+        Problem edited = TestDatabase.CreateProblem(ProblemId, stage);
+        edited.Title = "管理者儲存的題名";
+        context.Problems.Add(edited);
+        context.SaveChanges();
+        Guid revision = edited.Revision;
+        context.ChangeTracker.Clear();
+
+        var second = await RunTool(context, "migrate");
+        Assert.True(second.ExitCode == 0, second.Error);
+        Problem saved = Assert.Single(context.Problems);
+        Assert.Equal("管理者儲存的題名", saved.Title);
+        Assert.Equal(revision, saved.Revision);
     }
 
     [Fact]
@@ -97,32 +127,18 @@ public class SqlServerTests(SqlServerFixture fixture)
         DirectoryInfo folder = Directory.CreateTempSubdirectory("LeetAlgoExport_");
         try
         {
-            string configuration = typeof(SqlServerTests).Assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
-            ProcessStartInfo command = new("dotnet")
-            {
-                WorkingDirectory = TestDatabase.ToolsProjectDirectory,
-                UseShellExecute = false,
-                RedirectStandardError = true,
-                StandardErrorEncoding = Encoding.UTF8,
-                ArgumentList = { "run", "--no-build", "--configuration", configuration, "--", "export", folder.FullName },
-            };
-            command.Environment["ConnectionStrings__LeetAlgo"] = context.Database.GetConnectionString();
-            using Process first = Process.Start(command)!;
-            string firstError = await first.StandardError.ReadToEndAsync();
-            await first.WaitForExitAsync();
-            Assert.True(first.ExitCode == 0, firstError);
+            var first = await RunTool(context, "export", folder.FullName);
+            Assert.True(first.ExitCode == 0, first.Error);
             string backupFile = Path.Combine(folder.FullName, "problems.json");
             string backup = File.ReadAllText(backupFile);
             Assert.Contains("題目 1", backup);
             context.Problems.Single().Title = "匯出後修改";
             context.SaveChanges();
 
-            using Process second = Process.Start(command)!;
-            string secondError = await second.StandardError.ReadToEndAsync();
-            await second.WaitForExitAsync();
+            var second = await RunTool(context, "export", folder.FullName);
 
             Assert.Equal(1, second.ExitCode);
-            Assert.Contains("裡已經有檔案", secondError);
+            Assert.Contains("裡已經有檔案", second.Error);
             Assert.Equal(backup, File.ReadAllText(backupFile));
         }
         finally
@@ -333,6 +349,29 @@ public class SqlServerTests(SqlServerFixture fixture)
         context.Problems.Add(problem);
 
         Assert.Throws<DbUpdateException>(() => context.SaveChanges());
+    }
+
+    private static async Task<(int ExitCode, string Error)> RunTool(LeetAlgoContext context, params string[] args)
+    {
+        string configuration = typeof(SqlServerTests).Assembly.GetCustomAttribute<AssemblyConfigurationAttribute>()!.Configuration;
+        ProcessStartInfo command = new("dotnet")
+        {
+            WorkingDirectory = TestDatabase.ToolsProjectDirectory,
+            UseShellExecute = false,
+            RedirectStandardError = true,
+            StandardErrorEncoding = Encoding.UTF8,
+            ArgumentList = { "run", "--no-build", "--configuration", configuration, "--" },
+        };
+        foreach (string argument in args)
+        {
+            command.ArgumentList.Add(argument);
+        }
+        command.Environment["ConnectionStrings__LeetAlgo"] = context.Database.GetConnectionString();
+        command.Environment.Remove("Database__Password");
+        using Process process = Process.Start(command)!;
+        string error = await process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+        return (process.ExitCode, error);
     }
 
     private LeetAlgoContext CreateContextWithOneProblem()

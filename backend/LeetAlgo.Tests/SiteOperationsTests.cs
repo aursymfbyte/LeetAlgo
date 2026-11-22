@@ -68,7 +68,8 @@ public class SiteOperationsTests(SqlServerFixture fixture)
         {
             InitialCatalog = $"Missing_{Guid.NewGuid():N}", ConnectTimeout = 1, ConnectRetryCount = 0
         };
-        using var server = CreateServer(connection.ConnectionString);
+        using var server = CreateServer(connection.ConnectionString)
+            .WithWebHostBuilder(builder => builder.UseSetting("Database:MigrateOnStartup", "true"));
         using HttpClient client = server.CreateClient();
         Assert.Equal("Healthy", await client.GetStringAsync("/health/live"));
         using var ready = await client.GetAsync("/health/ready");
@@ -138,7 +139,6 @@ public class SiteOperationsTests(SqlServerFixture fixture)
         {
             builder.UseEnvironment("Production");
             builder.UseSetting("ConnectionStrings:LeetAlgo", connection);
-            builder.UseSetting("Database:MigrateOnStartup", "false");
             builder.UseSetting("RateLimiting:AtGateway", "true");
             builder.UseSetting("Jwt:Issuer", "LeetAlgo-tests");
             builder.UseSetting("Jwt:Audience", "LeetAlgo-tests");

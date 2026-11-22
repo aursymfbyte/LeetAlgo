@@ -71,7 +71,7 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
-if (app.Configuration.GetValue("Database:MigrateOnStartup", true))
+if (app.Environment.IsDevelopment() && app.Configuration.GetValue("Database:MigrateOnStartup", true))
 {
     using IServiceScope scope = app.Services.CreateScope();
     LeetAlgoContext context = scope.ServiceProvider.GetRequiredService<LeetAlgoContext>();

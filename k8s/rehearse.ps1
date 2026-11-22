@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $true
-if ($PSVersionTable.PSVersion -lt [version]'7.3') { throw '請使用 PowerShell 7.3 以上版本。' }
+if ($PSVersionTable.PSVersion -lt [version]'7.4') { throw '部署預演需要 PowerShell 7.4 以上版本。' }
 if ($PreviousTag -eq 'latest') { throw '請指定上一版的實際映像標籤。' }
 if ($Kind -eq 'kind' -and !(Get-Command kind -ErrorAction SilentlyContinue)) {
     $Kind = Join-Path $env:LOCALAPPDATA 'LeetAlgo/kind/kind.exe'
